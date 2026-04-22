@@ -201,7 +201,7 @@ def exp_can(canh_gioi: int) -> int:
 
 def embed_mau(title, desc, color=0xAA55FF):
     e = discord.Embed(title=title, description=desc, color=color)
-    e.set_footer(text="⚡ Tu Tiên Bot V2 | PostgreSQL Edition")
+    e.set_footer(text="⚡ Tu Tiên V2 | Deluxe Edition")
     return e
 
 def cooldown_con(last_dt, giay: int) -> float:
