@@ -14,7 +14,7 @@ import aiosqlite
 from datetime import datetime
 
 # ===== LẤY TOKEN TỪ ENV =====
-TOKEN = os.getenv("TOKEN")
+TOKEN = os.getenv("DISCORD_TOKEN")
 
 if not TOKEN:
     print("❌ Không tìm thấy TOKEN trong biến môi trường!")
