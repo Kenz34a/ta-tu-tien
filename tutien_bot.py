@@ -14,7 +14,7 @@ import os
 from datetime import datetime, timedelta
 
 # ── CẤU HÌNH ──────────────────────────────────────────────
-TOKEN = "MTQ5NjM2NzIyNDQyMjkyODQzNg.Gfjf7k.flG9WcVJYmxHVjhB_9CnUXhD95xfPNM2r7XstI"   # Dán token vào đây
+TOKEN = ""   # Dán token vào đây
 PREFIX = "!"
 DB_FILE = "tutien.db"
 
