@@ -409,6 +409,7 @@ async def init_db():
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS kiem_linh_exp INT DEFAULT 0",
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS dao_lu        BIGINT DEFAULT 0",
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS so_chet       INT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS da_chon_toc  BOOLEAN DEFAULT FALSE",
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS tong_mon      TEXT DEFAULT ''",
         ]
         for sql in migrations:
@@ -531,6 +532,44 @@ def embed_mau(title, desc, color=0xAA55FF):
     e.set_footer(text="⚡ Tu Tiên Bot V3 | Vạn Cổ Trường Tồn")
     return e
 
+async def paginate(ctx, pages, color=0xAA55FF):
+    """Gửi 1 tin nhắn duy nhất có nút ◀ ▶ để lật trang.
+    pages: list of (title, content_str)
+    """
+    if not pages:
+        return
+    if len(pages) == 1:
+        await ctx.send(embed=discord.Embed(title=pages[0][0], description=pages[0][1], color=color).set_footer(text="⚡ Tu Tiên Bot V3 | Vạn Cổ Trường Tồn"))
+        return
+
+    page = 0
+    total = len(pages)
+
+    def make_embed(p):
+        title, desc = pages[p]
+        e = discord.Embed(title=title, description=desc, color=color)
+        e.set_footer(text=f"⚡ Tu Tiên Bot V3 | Trang {p+1}/{total} — Dùng ◀ ▶ để chuyển")
+        return e
+
+    msg = await ctx.send(embed=make_embed(0))
+    await msg.add_reaction("◀️")
+    await msg.add_reaction("▶️")
+
+    def check(reaction, user):
+        return user == ctx.author and str(reaction.emoji) in ["◀️","▶️"] and reaction.message.id == msg.id
+
+    while True:
+        try:
+            reaction, user = await bot.wait_for("reaction_add", timeout=120, check=check)
+            page = (page + (1 if str(reaction.emoji)=="▶️" else -1)) % total
+            await msg.edit(embed=make_embed(page))
+            try: await msg.remove_reaction(reaction, user)
+            except: pass
+        except asyncio.TimeoutError:
+            try: await msg.clear_reactions()
+            except: pass
+            break
+
 def cooldown_con(last, giay):
     if not last: return 0
     return max(0, giay - (datetime.now(last.tzinfo)-last).total_seconds())
@@ -635,6 +674,98 @@ async def tao_nv(ctx, *, ten: str = None):
 
 Dùng `!help` để xem tất cả lệnh!
     """, 0x55FFAA))
+
+# ══════════════════════════════════════════════════════════════
+#  LỆNH: CHỌN TỘC (dành cho người chưa chọn tộc)
+# ══════════════════════════════════════════════════════════════
+@bot.command(name="chontoc", aliases=["ct","choc"])
+async def chon_toc_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+
+    # Kiểm tra đã chọn tộc thật sự chưa (khác Nhân Tộc mặc định = đã chọn)
+    TOC_MAC_DINH = "Nhân Tộc"
+    da_chon = nv.get('da_chon_toc', False)  # cờ riêng nếu có
+
+    # Dùng cột da_chon_toc để xác định — nếu chưa có cột thì fallback check toc != mặc định ban đầu
+    # Cách an toàn: kiểm tra trong DB có cờ không
+    async with db_pool.acquire() as c:
+        # Thêm cột da_chon_toc nếu chưa có
+        await c.execute("ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS da_chon_toc BOOLEAN DEFAULT FALSE")
+        row = await c.fetchrow("SELECT da_chon_toc FROM nhanvat WHERE user_id=$1", ctx.author.id)
+
+    if row and row['da_chon_toc']:
+        toc_info = TOC.get(nv['toc'], {})
+        await ctx.send(embed=embed_mau(
+            "🔒 Đã Chọn Tộc",
+            f"Bạn đã là **{toc_info.get('icon','')} {nv['toc']}** — không thể thay đổi huyết mạch!\n"
+            f"_{toc_info.get('mo_ta','')}_",
+            0xFF4444
+        )); return
+
+    # Hiển thị danh sách tộc để chọn
+    toc_list = list(TOC.keys())
+    desc = "⚠️ **Lưu ý: Chỉ được chọn 1 lần duy nhất, không thể đổi lại!**\n\n"
+    for i, (k, v) in enumerate(TOC.items(), 1):
+        desc += f"`{i}` {v['icon']} **{k}**\n"
+        desc += f"   _{v['mo_ta']}_\n"
+        desc += f"   ⚔️+{v['bonus_tan_cong']} | 🛡️+{v['bonus_phong_thu']} | 💧HP+{v['bonus_hp']:,} | ✨EXP+{v['bonus_exp']}%\n\n"
+    desc += "Gõ số **1-6** để chọn tộc (60 giây):"
+
+    await ctx.send(embed=embed_mau("🐉 Chọn Huyết Mạch Của Bạn", desc, 0xAA55FF))
+
+    def check(m): return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content.strip() in [str(i) for i in range(1, 7)]
+    try:
+        msg = await bot.wait_for("message", check=check, timeout=60)
+        toc_chon = toc_list[int(msg.content.strip()) - 1]
+    except asyncio.TimeoutError:
+        await ctx.send(embed=embed_mau("⏰ Hết Giờ","Không chọn tộc! Dùng `!chontoc` để thử lại.",0xFF4444)); return
+
+    # Xác nhận lần cuối
+    toc_info = TOC[toc_chon]
+    await ctx.send(embed=embed_mau(
+        f"⚠️ Xác Nhận Chọn {toc_info['icon']} {toc_chon}",
+        f"Bạn chắc chắn muốn chọn **{toc_chon}**?\n"
+        f"_{toc_info['mo_ta']}_\n\n"
+        f"Gõ **`xác nhận`** để đồng ý (20 giây):",
+        0xFFAA00
+    ))
+
+    def check2(m): return m.author.id == ctx.author.id and m.channel.id == ctx.channel.id and m.content.strip().lower() in ["xác nhận", "xac nhan", "yes", "ok"]
+    try:
+        await bot.wait_for("message", check=check2, timeout=20)
+    except asyncio.TimeoutError:
+        await ctx.send(embed=embed_mau("❌ Đã Hủy","Không xác nhận — tộc chưa được chọn.",0x888888)); return
+
+    # Áp dụng bonus tộc vào nhân vật
+    async with db_pool.acquire() as c:
+        await c.execute("""
+            UPDATE nhanvat SET
+                toc          = $2,
+                tan_cong     = tan_cong + $3,
+                phong_thu    = phong_thu + $4,
+                linh_luc     = linh_luc + $5,
+                linh_luc_max = linh_luc_max + $5,
+                da_chon_toc  = TRUE
+            WHERE user_id = $1
+        """, ctx.author.id,
+           toc_chon,
+           toc_info["bonus_tan_cong"],
+           toc_info["bonus_phong_thu"],
+           toc_info["bonus_hp"])
+
+    await them_nhat_ky(ctx.author.id, "system", f"Chọn tộc {toc_chon}")
+    await ctx.send(embed=embed_mau(
+        f"🎉 Huyết Mạch Thức Tỉnh!",
+        f"{toc_info['icon']} **{toc_chon}** — _{toc_info['mo_ta']}_\n\n"
+        f"⚔️ Tấn Công **+{toc_info['bonus_tan_cong']:,}**\n"
+        f"🛡️ Phòng Thủ **+{toc_info['bonus_phong_thu']:,}**\n"
+        f"💧 HP **+{toc_info['bonus_hp']:,}**\n"
+        f"✨ EXP Bonus **+{toc_info['bonus_exp']}%**\n\n"
+        f"🔒 Huyết mạch đã định — không thể thay đổi!",
+        0xFFD700
+    ))
 
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: THÔNG TIN
@@ -899,22 +1030,29 @@ async def cong_phap_cmd(ctx, hanh_dong: str = None, *, ten: str = None):
         await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
 
     if not hanh_dong or hanh_dong=="list":
-        lines = ["**⚔️ Tấn Công:**"]
+        tan_cong_lines = ["**⚔️ Tấn Công:**"]
         for k,v in CONG_PHAP_TAN_CONG.items():
-            lines.append(f"  `{k}` — 💥{v['sat_thuong']} | Cần Lv.{v['cap_yeu']} | 💎{v['phi']}")
-        lines.append("\n**🛡️ Phòng Thủ:**")
+            tan_cong_lines.append(f"  `{k}` — 💥{v['sat_thuong']} | Lv.{v['cap_yeu']} | 💎{v['phi']}")
+
+        phong_thu_lines = ["**🛡️ Phòng Thủ:**"]
         for k,v in CONG_PHAP_PHONG_THU.items():
-            lines.append(f"  `{k}` — 🛡️+{v['phong_thu_bonus']} | Cần Lv.{v['cap_yeu']} | 💎{v['phi']}")
-        lines.append("\n**🌀 Đại Thần Thông:**")
+            phong_thu_lines.append(f"  `{k}` — 🛡️+{v['phong_thu_bonus']} | Lv.{v['cap_yeu']} | 💎{v['phi']}")
+
+        than_thong_lines = ["**🌀 Đại Thần Thông:**"]
         for k,v in DAI_THAN_THONG.items():
-            lines.append(f"  `{k}` — 💥{v['sat_thuong']} | Cần Lv.{v['cap_yeu']} | 💎{v['phi']}")
-        lines.append("\n**✨ Passive:**")
+            than_thong_lines.append(f"  `{k}` — 💥{v['sat_thuong']} | Lv.{v['cap_yeu']} | 💎{v['phi']}")
+
+        passive_lines = ["**✨ Passive:**"]
         for k,v in CONG_PHAP_PASSIVE.items():
-            lines.append(f"  `{k}` — {v['mo_ta']} | Cần Lv.{v['cap_yeu']} | 💎{v['phi']}")
-        # Chia trang nếu quá dài
-        text = "\n".join(lines)
-        for i in range(0, len(text), 1900):
-            await ctx.send(embed=embed_mau("📚 Danh Sách Công Pháp", text[i:i+1900]))
+            passive_lines.append(f"  `{k}` — {v['mo_ta']} | Lv.{v['cap_yeu']} | 💎{v['phi']}")
+
+        cp_pages = [
+            ("📚 Công Pháp (1/4) — Tấn Công", "\n".join(tan_cong_lines)),
+            ("📚 Công Pháp (2/4) — Phòng Thủ", "\n".join(phong_thu_lines)),
+            ("📚 Công Pháp (3/4) — Đại Thần Thông", "\n".join(than_thong_lines)),
+            ("📚 Công Pháp (4/4) — Passive", "\n".join(passive_lines)),
+        ]
+        await paginate(ctx, cp_pages)
         return
 
     if hanh_dong == "hoc" and ten:
@@ -1499,9 +1637,13 @@ async def shop(ctx, trang: str = None, *, ten: str = None):
 
     if trang=="dan" or not trang:
         icon_map={"hoi_phuc":"💧","tu_vi":"✨","dot_pha":"🔮","do_kiep":"⚡","buff_atk":"⚔️","buff_def":"🛡️","buff_hp":"💧","buff_all":"⭐"}
-        lines=[f"{icon_map.get(v['loai'],'💊')} **{k}** {v['rare']} — {v['gia']:,}💎 | Cần Lv.{v.get('cap_yeu',0)}" for k,v in DAN_DUOC.items()]
-        for i in range(0,len(lines),15):
-            await ctx.send(embed=embed_mau("🏪 Cửa Hàng Đan Dược","\n".join(lines[i:i+15])))
+        all_lines=[f"{icon_map.get(v['loai'],'💊')} **{k}** {v['rare']} — {v['gia']:,}💎 | Lv.{v.get('cap_yeu',0)}" for k,v in DAN_DUOC.items()]
+        chunk = 10
+        shop_pages = [
+            (f"🏪 Cửa Hàng Đan Dược ({i//chunk+1}/{(len(all_lines)-1)//chunk+1})", "\n".join(all_lines[i:i+chunk]))
+            for i in range(0, len(all_lines), chunk)
+        ]
+        await paginate(ctx, shop_pages)
         return
 
     if trang=="mua" and ten:
@@ -1537,8 +1679,12 @@ async def tui_do(ctx):
         dan = DAN_DUOC.get(it['vat_pham'],{})
         icon = dan.get('rare','📦')
         lines.append(f"{icon} **{it['vat_pham']}** x{it['so_luong']}")
-    for i in range(0,len(lines),20):
-        await ctx.send(embed=embed_mau(f"🎒 Túi Đồ — {nv['ten']}","\n".join(lines[i:i+20])))
+    chunk = 15
+    td_pages = [
+        (f"🎒 Túi Đồ — {nv['ten']} ({i//chunk+1}/{(len(lines)-1)//chunk+1})", "\n".join(lines[i:i+chunk]))
+        for i in range(0, len(lines), chunk)
+    ]
+    await paginate(ctx, td_pages)
 
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: BXH & STATS
@@ -1619,51 +1765,55 @@ async def thanh_tich_cmd(ctx, member: discord.Member = None):
         else:
             lines.append(f"🔒 ~~{info['ten']}~~ — _{info['mo_ta']}_")
     nv=await get_nv(target.id); ten=nv['ten'] if nv else target.display_name
-    for i in range(0,len(lines),20):
-        await ctx.send(embed=embed_mau(f"🏅 Thành Tích — {ten} ({len(da_co)}/{len(THANH_TICH)})","\n".join(lines[i:i+20])))
+    chunk = 15
+    tt_pages = [
+        (f"🏅 Thành Tích — {ten} ({len(da_co)}/{len(THANH_TICH)}) — Trang {i//chunk+1}/{(len(lines)-1)//chunk+1}",
+         "\n".join(lines[i:i+chunk]))
+        for i in range(0, len(lines), chunk)
+    ]
+    await paginate(ctx, tt_pages)
 
 # ══════════════════════════════════════════════════════════════
-#  LỆNH: HELP
+#  LỆNH: HELP (pagination 1 tin nhắn, dùng reaction ◀ ▶)
 # ══════════════════════════════════════════════════════════════
-@bot.command(name="help",aliases=["hd","huongdan"])
-async def help_cmd(ctx):
-    pages = [
-        ("📖 Hướng Dẫn (1/4) — Nhân Vật & Tu Luyện", """
+HELP_PAGES = [
+    ("📖 Hướng Dẫn (1/4) — Nhân Vật & Tu Luyện", """
 **👤 Nhân Vật**
-`!taonv <tên>` — Tạo nhân vật (chọn tộc)
-`!tt [@người]` — Xem thông tin
+`!taonv <tên>` — Tạo nhân vật
+`!chontoc` — Chọn tộc *(1 lần, không đổi!)*
+`!tt [@người]` — Xem thông tin nhân vật
 `!thongke` — Thống kê tổng hợp
 `!bxh` — Bảng xếp hạng lực chiến
 
 **⚡ Tu Luyện**
-`!tulyen` — Tu luyện (60s)
-`!khampha` — Khám phá tìm đồ (120s)
-`!bequan <giờ>` — Bế quan 1-72h (EXP x3)
+`!tulyen` — Tu luyện *(60s cooldown)*
+`!khampha` — Khám phá tìm đồ *(120s)*
+`!bequan <giờ>` — Bế quan 1-72h *(EXP x3)*
 `!xuatquan` — Xuất quan nhận thưởng
 
 **🌿 Trồng Cây**
-`!trongcay list` — Xem danh sách cây
+`!trongcay list` — Danh sách cây
 `!trongcay trong <tên>` — Trồng cây
 `!trongcay thuhoach` — Thu hoạch
 `!trongcay vuon` — Xem vườn
-        """),
-        ("📖 Hướng Dẫn (2/4) — Chiến Đấu & Đạo", """
+"""),
+    ("📖 Hướng Dẫn (2/4) — Chiến Đấu & Đạo", """
 **⚔️ Chiến Đấu**
 `!boss` — Xem boss bản đồ hiện tại
 `!boss <số>` — Đánh boss
 `!bossthegioi` — Xem boss thế giới
 `!bossthegioi tan` — Tấn công boss thế giới
 `!pvp @người` — Thách đấu PvP
-`!thap` — Tháp thử luyện (120s)
+`!thap` — Tháp thử luyện *(120s)*
 
 **☯️ Đạo & Công Pháp**
 `!chondao` — Xem / chọn đạo chính
 `!daophu` — Học đạo phụ
-`!congphap list` — Xem công pháp
+`!congphap list` — Xem danh sách công pháp
 `!congphap hoc <tên>` — Học công pháp
-`!congphap xem` — Xem công pháp đã học
-        """),
-        ("📖 Hướng Dẫn (3/4) — Vật Phẩm & Trang Bị", """
+`!congphap xem` — Công pháp đã học
+"""),
+    ("📖 Hướng Dẫn (3/4) — Vật Phẩm & Trang Bị", """
 **🎒 Túi Đồ & Trang Bị**
 `!tuido` — Xem túi đồ
 `!trangbi` — Xem trang bị đang mặc
@@ -1678,13 +1828,13 @@ async def help_cmd(ctx):
 `!nhatky` — Nhật ký hoạt động
 `!lichsupvp` — Lịch sử PvP
 `!thanhtich` — Xem thành tích
-        """),
-        ("📖 Hướng Dẫn (4/4) — Xã Hội & Thông Tin", """
+"""),
+    ("📖 Hướng Dẫn (4/4) — Xã Hội & Thông Tin", """
 **💍 Kết Duyên**
-`!ketduyen @người` — Cầu hôn đạo lữ (10,000💎)
+`!ketduyen @người` — Cầu hôn đạo lữ *(10,000💎)*
 
 **🏯 Tông Môn**
-`!lapmon <tên>` — Lập tông môn (Lv.3+, 1000💎)
+`!lapmon <tên>` — Lập tông môn *(Lv.3+, 1000💎)*
 `!thamgia <tên>` — Gia nhập tông môn
 
 **🗺️ Bản Đồ**
@@ -1695,10 +1845,12 @@ async def help_cmd(ctx):
 
 **🐉 Tộc:** Long, Thần, Nhân, Tiên, Ma, Thú
 **36 Cảnh Giới** từ Phàm Nhân → Vô Thượng Đại Đạo
-        """),
-    ]
-    for title, desc in pages:
-        await ctx.send(embed=embed_mau(title, desc))
+"""),
+]
+
+@bot.command(name="help", aliases=["hd","huongdan"])
+async def help_cmd(ctx):
+    await paginate(ctx, HELP_PAGES)
 
 # ══════════════════════════════════════════════════════════════
 #  KHỞI ĐỘNG
