@@ -11,12 +11,24 @@ import aiosqlite
 import random
 import asyncio
 import os
+import json
 from datetime import datetime, timedelta
 
-# ── CẤU HÌNH ──────────────────────────────────────────────
-TOKEN = "DISCORD_TOKEN"   # Dán token vào đây
+# ── CẤU HÌNH ──────────────────────────────────────────────────
+
+# ===== LẤY TOKEN TỪ ENV =====
+TOKEN = os.getenv("DISCORD_TOKEN")
+if not TOKEN:
+    print("❌ Không tìm thấy TOKEN trong biến môi trường!")
+    exit()
+
+# ===== INTENTS =====
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+
+# ===== TẠO BOT =====
 PREFIX = "!"
-DB_FILE = "tutien.db"
 
 # ── CẢNH GIỚI TU TIÊN ─────────────────────────────────────
 CANH_GIOI = [
