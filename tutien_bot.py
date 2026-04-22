@@ -26,7 +26,8 @@ intents.message_content = True
 intents.members = True
 
 # ===== TẠO BOT =====
-bot = commands.Bot(command_prefix="!", intents=intents)
+PREFIX = "!"
+DB_FILE = "tutien.db"
 
 # ── CẢNH GIỚI TU TIÊN ─────────────────────────────────────
 CANH_GIOI = [
