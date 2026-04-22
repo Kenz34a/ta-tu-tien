@@ -29,6 +29,7 @@ intents.members = True
 
 # ===== TẠO BOT =====
 PREFIX = "!"
+DB_FILE = "tutien.db"
 
 # ── CẢNH GIỚI TU TIÊN ─────────────────────────────────────
 CANH_GIOI = [
