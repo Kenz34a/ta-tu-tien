@@ -525,7 +525,16 @@ async def cap_nhat_tk(uid, **kw):
         cols = ", ".join(f"{k}={k}+${i+2}" for i,k in enumerate(kw))
         await c.execute(f"UPDATE thong_ke SET {cols},updated_at=NOW() WHERE user_id=$1", uid, *kw.values())
 
-def exp_can(cg): return int((cg+1) * 500 * (1.15**cg))
+def exp_can(cg):
+    # Cảnh giới thấp (0-9): dễ lên, scale nhẹ
+    # Cảnh giới giữa (10-19): khó dần, scale vừa
+    # Cảnh giới cao (20+): cực kỳ khó, scale hàm mũ mạnh
+    if cg < 10:
+        return int((cg + 1) * 5_000 * (1.4 ** cg))
+    elif cg < 20:
+        return int((cg + 1) * 50_000 * (1.6 ** (cg - 10)))
+    else:
+        return int((cg + 1) * 2_000_000 * (2.0 ** (cg - 20)))
 
 def embed_mau(title, desc, color=0xAA55FF):
     e = discord.Embed(title=title, description=desc, color=color)
@@ -848,21 +857,54 @@ async def tu_luyen(ctx):
         pi = CONG_PHAP_PASSIVE.get(p,{})
         if "bonus_tuvi" in pi: tuvi_bonus += pi["bonus_tuvi"]
 
-    exp_gain = int((random.randint(200,800) + nv['canh_gioi']*100) * (1 + exp_bonus/100))
-    tv_gain  = random.randint(80,300) + tuvi_bonus
-    ll_hoi   = random.randint(50,200)
-    kl_exp   = random.randint(10,30)
+    cg = nv['canh_gioi']
+
+    # EXP gain scale mạnh theo cảnh giới — càng cao càng nhiều
+    base_exp = int(500 * (1.8 ** cg))  # hàm mũ tăng nhanh
+    exp_gain = int((base_exp + random.randint(base_exp//2, base_exp)) * (1 + exp_bonus/100))
+
+    # Tu Vi gain cũng scale theo cảnh giới
+    base_tv = int(200 * (1.5 ** cg))
+    tv_gain = int((base_tv + random.randint(0, base_tv//2)) + tuvi_bonus)
+
+    ll_hoi  = int(random.randint(100, 500) * (1 + cg * 0.1))
+    kl_exp  = random.randint(10, 30)
 
     new_exp = nv['exp'] + exp_gain
-    new_cg  = nv['canh_gioi']
+    new_cg  = cg
     dp_msg  = ""
     dp_cnt  = 0
+    tv_tru_msg = ""
 
+    # Xử lý đột phá — có tỉ lệ thất bại tăng theo cảnh giới
     while new_exp >= exp_can(new_cg) and new_cg < len(CANH_GIOI)-1:
-        new_exp -= exp_can(new_cg)
-        new_cg += 1
-        dp_cnt += 1
-        dp_msg = f"\n\n🎉 **ĐỘT PHÁ → {CANH_GIOI[new_cg]}**! 🎉"
+        # Tỉ lệ thành công đột phá: cao nhất 95% (cg 0), thấp nhất ~20% (cg 35)
+        ti_le_thanh_cong = max(20, 95 - new_cg * 2)
+
+        # Bonus linh căn giúp tăng tỉ lệ
+        lc_bonus = {"Thiên Linh Căn":30,"Biến Linh Căn":20,"Tứ Linh Căn":15,
+                    "Tam Linh Căn":10,"Song Linh Căn":5,"Đơn Linh Căn":5,"Phế Linh Căn":0}
+        ti_le_thanh_cong = min(99, ti_le_thanh_cong + lc_bonus.get(nv['linh_can'], 0))
+
+        if random.randint(1, 100) <= ti_le_thanh_cong:
+            # Đột phá THÀNH CÔNG
+            new_exp -= exp_can(new_cg)
+            new_cg += 1
+            dp_cnt += 1
+            dp_msg = f"\n\n🎉 **ĐỘT PHÁ → {CANH_GIOI[new_cg]}**! 🎉\n_(Tỉ lệ: {ti_le_thanh_cong}%)_"
+        else:
+            # Đột phá THẤT BẠI — trừ 20-40% tu vi, KHÔNG giảm cảnh giới
+            phan_tram_tru = random.randint(20, 40)
+            tru_tv = int(nv['tu_vi'] * phan_tram_tru / 100)
+            new_exp = exp_can(new_cg) - 1  # giữ nguyên ở ngưỡng, không vượt qua
+            tv_tru_msg = (
+                f"\n\n💥 **ĐỘT PHÁ THẤT BẠI!**\n"
+                f"Tỉ lệ thành công: **{ti_le_thanh_cong}%** — Vận khí không thuận!\n"
+                f"🌀 Tu Vi bị tổn hao **{phan_tram_tru}%** (−{tru_tv:,})\n"
+                f"_(Cảnh giới không giảm — tu luyện thêm để thử lại!)_"
+            )
+            await cap_nhat(ctx.author.id, tu_vi=max(0, nv['tu_vi'] - tru_tv))
+            break  # dừng, không tiếp tục đột phá
 
     # Kiếm Linh exp
     new_kl_exp = nv['kiem_linh_exp'] + kl_exp
@@ -877,7 +919,6 @@ async def tu_luyen(ctx):
     bd_info = BAN_DO[ban_do_hien]
     phi_thuong_msg = ""
     if new_cg > bd_info["cap_max"] and bd_info["phi_thuong"]:
-        # Tự động chuyển bản đồ
         for bdk, bdv in BAN_DO.items():
             if bdv["cap_min"] <= new_cg <= bdv["cap_max"]:
                 ban_do_hien = bdk
@@ -891,17 +932,22 @@ async def tu_luyen(ctx):
         ban_do=ban_do_hien, last_tulyen=datetime.utcnow()
     )
     await cap_nhat_tk(ctx.author.id, tong_tulyen=1, tong_exp=exp_gain, dot_pha_count=dp_cnt)
-    await them_nhat_ky(ctx.author.id,"tulyen",f"+{exp_gain} EXP, +{tv_gain} Tu Vi → {CANH_GIOI[new_cg]}")
+    await them_nhat_ky(ctx.author.id,"tulyen",f"+{exp_gain:,} EXP, +{tv_gain:,} Tu Vi → {CANH_GIOI[new_cg]}")
 
     nv2 = await get_nv(ctx.author.id)
     async with db_pool.acquire() as c: tk=await c.fetchrow("SELECT * FROM thong_ke WHERE user_id=$1",ctx.author.id)
     await kiem_tra_thanh_tich(ctx, ctx.author.id, nv2, tk)
 
+    # Tỉ lệ đột phá kế tiếp (nếu gần ngưỡng)
+    ti_le_ke = max(20, min(99, 95 - new_cg * 2))
+    can_them = exp_can(new_cg) - new_exp
+    ti_le_str = f"\n🎯 Tỉ lệ ĐP tiếp: **{ti_le_ke}%** | Cần thêm **{can_them:,}** EXP" if new_cg < len(CANH_GIOI)-1 else ""
+
     await ctx.send(embed=embed_mau("🧘 Tu Luyện", f"""
-✨ **+{exp_gain} EXP** | 🌀 **+{tv_gain} Tu Vi** | 💧 **+{ll_hoi} HP**
-📊 EXP: {new_exp:,}/{exp_can(new_cg):,} | **{CANH_GIOI[new_cg]}**
-{dp_msg}{phi_thuong_msg}
-    """, 0x55FFAA))
+✨ **+{exp_gain:,} EXP** | 🌀 **+{tv_gain:,} Tu Vi** | 💧 **+{ll_hoi:,} HP**
+📊 EXP: {new_exp:,}/{exp_can(new_cg):,} | **{CANH_GIOI[new_cg]}**{ti_le_str}
+{dp_msg}{tv_tru_msg}{phi_thuong_msg}
+    """, 0x55FFAA if not tv_tru_msg else 0xFF6600))
 
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: BẾ QUAN
