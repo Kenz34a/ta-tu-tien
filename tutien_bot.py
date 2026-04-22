@@ -19,6 +19,9 @@ DB_URL = os.getenv("DATABASE_URL")
 PREFIX = "!"
 if not TOKEN:
     print("❌ Thiếu DISCORD_TOKEN!"); exit()
+if not DB_URL:
+    print("❌ Thiếu DATABASE_URL! Bot sẽ không thể lưu dữ liệu."); exit()
+print(f"✅ Token OK | DB: {DB_URL[:30]}...")
 
 # ══════════════════════════════════════════════════════════════
 #  CẢNH GIỚI & BẢN ĐỒ
@@ -388,6 +391,33 @@ async def init_db():
                 created_at    TIMESTAMPTZ DEFAULT NOW()
             )
         """)
+        # ── Migration: tự động thêm cột thiếu cho bảng nhanvat cũ ──
+        migrations = [
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS last_bequan   TIMESTAMPTZ",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS bequan_gio    INT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS last_khampha  TIMESTAMPTZ",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS toc           TEXT DEFAULT 'Nhân Tộc'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS linh_can      TEXT DEFAULT 'Song Linh Căn'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS tu_vi         BIGINT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS ban_do        TEXT DEFAULT 'nhan_gioi'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS dao_chinh     TEXT DEFAULT ''",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS dao_phu       TEXT DEFAULT ''",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS cong_phap     TEXT DEFAULT '[]'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS passive       TEXT DEFAULT '[]'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS trang_bi      TEXT DEFAULT '{}'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS kiem_linh_cap INT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS kiem_linh_exp INT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS dao_lu        BIGINT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS so_chet       INT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS tong_mon      TEXT DEFAULT ''",
+        ]
+        for sql in migrations:
+            try:
+                await c.execute(sql)
+            except Exception as e:
+                print(f"⚠️ Migration skip: {e}")
+        print("✅ Migration hoàn tất!")
+
         await c.execute("""
             CREATE TABLE IF NOT EXISTS tui_do (
                 user_id  BIGINT, vat_pham TEXT, so_luong INT DEFAULT 1,
@@ -1675,9 +1705,27 @@ async def help_cmd(ctx):
 # ══════════════════════════════════════════════════════════════
 @bot.event
 async def on_ready():
-    await init_db()
-    print(f"✅ Bot Tu Tiên V3 MEGA online: {bot.user}")
-    await bot.change_presence(activity=discord.Game(name="Tu Tiên V3 | !help | 36 Cảnh Giới"))
+    print(f"🔌 Bot Tu Tiên V3 đã kết nối Discord: {bot.user}")
+    await bot.change_presence(activity=discord.Game(name="⏳ Đang kết nối DB..."))
+    
+    # Retry kết nối DB tối đa 5 lần
+    for attempt in range(1, 6):
+        try:
+            print(f"🗄️ Đang kết nối database... (lần {attempt}/5)")
+            await init_db()
+            print(f"✅ Bot Tu Tiên V3 MEGA online: {bot.user}")
+            await bot.change_presence(activity=discord.Game(name="Tu Tiên V3 | !help | 36 Cảnh Giới"))
+            return
+        except Exception as e:
+            print(f"❌ Lỗi kết nối DB (lần {attempt}/5): {type(e).__name__}: {e}")
+            if attempt < 5:
+                print(f"⏳ Thử lại sau 10 giây...")
+                await asyncio.sleep(10)
+            else:
+                print("💀 Không thể kết nối database sau 5 lần thử!")
+                print("👉 Kiểm tra DATABASE_URL có đúng không:")
+                print(f"   DB_URL = {DB_URL[:40] if DB_URL else 'KHÔNG CÓ'}...")
+                await bot.change_presence(activity=discord.Game(name="❌ Lỗi DB - Kiểm tra DATABASE_URL"))
 
 @bot.event
 async def on_command_error(ctx, error):
