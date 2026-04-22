@@ -56,25 +56,25 @@ def get_ban_do(canh_gioi_idx: int) -> str:
 #  TỘC
 # ══════════════════════════════════════════════════════════════
 TOC = {
-    "Long Tộc":  {"icon":"🐉","mo_ta":"Bá chủ vạn thú, máu rồng cổ đại",   "bonus_tan_cong":15,"bonus_phong_thu":5, "bonus_hp":200,"bonus_exp":0,  "ki_nang_dac_biet":"Rồng Ngâm"},
-    "Thần Tộc":  {"icon":"⚡","mo_ta":"Con cháu chư thần, thiên phú siêu phàm","bonus_tan_cong":10,"bonus_phong_thu":10,"bonus_hp":100,"bonus_exp":10, "ki_nang_dac_biet":"Thần Ân"},
-    "Nhân Tộc":  {"icon":"👤","mo_ta":"Tiềm năng vô hạn, vạn đạo dung hợp", "bonus_tan_cong":5, "bonus_phong_thu":5, "bonus_hp":50, "bonus_exp":20, "ki_nang_dac_biet":"Thiên Phú"},
-    "Tiên Tộc":  {"icon":"🌸","mo_ta":"Thể chất thanh linh, linh lực thuần túy","bonus_tan_cong":8, "bonus_phong_thu":8, "bonus_hp":150,"bonus_exp":15, "ki_nang_dac_biet":"Tiên Thể"},
-    "Ma Tộc":    {"icon":"😈","mo_ta":"Sức mạnh hủy diệt, đao ma vô song",  "bonus_tan_cong":25,"bonus_phong_thu":0, "bonus_hp":0,  "bonus_exp":5,  "ki_nang_dac_biet":"Ma Thể"},
-    "Thú Tộc":   {"icon":"🐺","mo_ta":"Bản năng chiến đấu, thể xác cường hóa","bonus_tan_cong":20,"bonus_phong_thu":15,"bonus_hp":300,"bonus_exp":0,  "ki_nang_dac_biet":"Dã Tính"},
+    "Long Tộc":  {"icon":"🐉","mo_ta":"Bá chủ vạn thú, máu rồng cổ đại thần thánh",      "bonus_tan_cong":80, "bonus_phong_thu":30, "bonus_hp":5000, "bonus_exp":15,  "ki_nang_dac_biet":"Rồng Ngâm"},
+    "Thần Tộc":  {"icon":"⚡","mo_ta":"Con cháu chư thần, thiên phú vượt vạn cổ",         "bonus_tan_cong":60, "bonus_phong_thu":60, "bonus_hp":3000, "bonus_exp":30,  "ki_nang_dac_biet":"Thần Ân"},
+    "Nhân Tộc":  {"icon":"👤","mo_ta":"Tiềm năng vô hạn, vạn đạo dung hợp siêu việt",     "bonus_tan_cong":30, "bonus_phong_thu":30, "bonus_hp":1500, "bonus_exp":50,  "ki_nang_dac_biet":"Thiên Phú"},
+    "Tiên Tộc":  {"icon":"🌸","mo_ta":"Thể chất thanh linh, linh lực thuần túy vô song",   "bonus_tan_cong":50, "bonus_phong_thu":50, "bonus_hp":4000, "bonus_exp":40,  "ki_nang_dac_biet":"Tiên Thể"},
+    "Ma Tộc":    {"icon":"😈","mo_ta":"Sức mạnh hủy diệt thiên địa, đao ma vô thượng",     "bonus_tan_cong":120,"bonus_phong_thu":10, "bonus_hp":1000, "bonus_exp":20,  "ki_nang_dac_biet":"Ma Thể"},
+    "Thú Tộc":   {"icon":"🐺","mo_ta":"Bản năng chiến đấu thuần túy, thể xác bất diệt",   "bonus_tan_cong":100,"bonus_phong_thu":80, "bonus_hp":8000, "bonus_exp":10,  "ki_nang_dac_biet":"Dã Tính"},
 }
 
 # ══════════════════════════════════════════════════════════════
 #  LINH CĂN
 # ══════════════════════════════════════════════════════════════
 LINH_CAN = {
-    "Thiên Linh Căn":   {"icon":"🌟","mo_ta":"Hiếm nhất, thiên phú siêu việt", "bonus_exp":50,"bonus_tulyen":30,"ty_le":1},
-    "Biến Linh Căn":    {"icon":"🌈","mo_ta":"5 hệ dung hợp, tiến độ nhanh",   "bonus_exp":30,"bonus_tulyen":20,"ty_le":4},
-    "Tứ Linh Căn":      {"icon":"💫","mo_ta":"4 hệ linh căn cân bằng",          "bonus_exp":20,"bonus_tulyen":15,"ty_le":10},
-    "Tam Linh Căn":     {"icon":"✨","mo_ta":"3 hệ linh căn, khá tốt",          "bonus_exp":15,"bonus_tulyen":10,"ty_le":20},
-    "Song Linh Căn":    {"icon":"⭐","mo_ta":"2 hệ linh căn, phổ biến",         "bonus_exp":10,"bonus_tulyen":5, "ty_le":30},
-    "Đơn Linh Căn":     {"icon":"🔥","mo_ta":"1 hệ chuyên sâu, mạnh 1 loại",   "bonus_exp":8, "bonus_tulyen":8, "ty_le":25},
-    "Phế Linh Căn":     {"icon":"💀","mo_ta":"Vô căn nhưng ý chí kiên cường",  "bonus_exp":0, "bonus_tulyen":0, "ty_le":10},
+    "Thiên Linh Căn":   {"icon":"🌟","mo_ta":"Vạn năm hiếm có một, thiên phú tuyệt thế vô song",   "bonus_exp":200,"bonus_tulyen":150,"ty_le":1},
+    "Biến Linh Căn":    {"icon":"🌈","mo_ta":"5 hệ hỗn dung, tiến tốc kinh thiên động địa",          "bonus_exp":120,"bonus_tulyen":80, "ty_le":4},
+    "Tứ Linh Căn":      {"icon":"💫","mo_ta":"4 hệ linh căn cân bằng, thiên địa chứng đạo",          "bonus_exp":80, "bonus_tulyen":50, "ty_le":10},
+    "Tam Linh Căn":     {"icon":"✨","mo_ta":"3 hệ linh căn, khí vận phi thường",                    "bonus_exp":50, "bonus_tulyen":35, "ty_le":20},
+    "Song Linh Căn":    {"icon":"⭐","mo_ta":"2 hệ linh căn, tài chất xuất chúng",                   "bonus_exp":30, "bonus_tulyen":20, "ty_le":30},
+    "Đơn Linh Căn":     {"icon":"🔥","mo_ta":"1 hệ chuyên sâu, chuyên tinh hóa thần",               "bonus_exp":25, "bonus_tulyen":25, "ty_le":25},
+    "Phế Linh Căn":     {"icon":"💀","mo_ta":"Vô căn nhưng ý chí thép, nghịch thiên cải mệnh",      "bonus_exp":5,  "bonus_tulyen":5,  "ty_le":10},
 }
 
 def random_linh_can() -> str:
@@ -87,18 +87,18 @@ def random_linh_can() -> str:
 #  LỰC CHIẾN
 # ══════════════════════════════════════════════════════════════
 def tinh_luc_chien(nv) -> int:
-    base = nv['tan_cong']*10 + nv['phong_thu']*8 + nv['linh_luc_max']//2
-    cg_bonus = nv['canh_gioi'] * 500
-    tv_bonus = nv['tu_vi'] // 100
+    base = nv['tan_cong']*50 + nv['phong_thu']*35 + nv['linh_luc_max']*3
+    cg_bonus = nv['canh_gioi'] * 50000
+    tv_bonus = nv['tu_vi'] // 10
     return base + cg_bonus + tv_bonus
 
 def luc_chien_rank(lc: int) -> str:
-    if lc < 5000:    return "⚪ Phàm"
-    if lc < 20000:   return "🟢 Tinh Anh"
-    if lc < 80000:   return "🔵 Cường Giả"
-    if lc < 300000:  return "🟣 Tôn Giả"
-    if lc < 1000000: return "🟡 Hoàng Giả"
-    if lc < 5000000: return "🔴 Đế Giả"
+    if lc < 100000:     return "⚪ Phàm"
+    if lc < 500000:     return "🟢 Tinh Anh"
+    if lc < 2000000:    return "🔵 Cường Giả"
+    if lc < 10000000:   return "🟣 Tôn Giả"
+    if lc < 50000000:   return "🟡 Hoàng Giả"
+    if lc < 500000000:  return "🔴 Đế Giả"
     return "⚫ Siêu Việt"
 
 # ══════════════════════════════════════════════════════════════
@@ -183,11 +183,11 @@ DAI_THAN_THONG = {
 }
 
 CONG_PHAP_PASSIVE = {
-    "Thổ Nạp Tâm Pháp":      {"bonus_tuvi":5,   "cap_yeu":1,  "phi":500,  "mo_ta":"+5 Tu Vi/lần tu"},
-    "Cửu Dương Thần Công":    {"bonus_damage":10,"cap_yeu":5,  "phi":2000, "mo_ta":"+10% sát thương"},
-    "Thái Cực Chân Quyết":    {"bonus_mana":50,  "cap_yeu":7,  "phi":3000, "mo_ta":"+50 Linh Lực tối đa"},
-    "Bất Tử Trường Sinh Công":{"bonus_hp":200,   "cap_yeu":9,  "phi":5000, "mo_ta":"+200 HP tối đa"},
-    "Hỗn Độn Đạo Kinh":       {"bonus_all":20,   "cap_yeu":15, "phi":30000,"mo_ta":"+20 tất cả chỉ số"},
+    "Thổ Nạp Tâm Pháp":      {"bonus_tuvi":50,  "cap_yeu":1,  "phi":500,   "mo_ta":"+50 Tu Vi/lần tu"},
+    "Cửu Dương Thần Công":    {"bonus_damage":30,"cap_yeu":5,  "phi":2000,  "mo_ta":"+30% sát thương"},
+    "Thái Cực Chân Quyết":    {"bonus_mana":2000,"cap_yeu":7,  "phi":3000,  "mo_ta":"+2000 Linh Lực tối đa"},
+    "Bất Tử Trường Sinh Công":{"bonus_hp":10000, "cap_yeu":9,  "phi":5000,  "mo_ta":"+10,000 HP tối đa"},
+    "Hỗn Độn Đạo Kinh":       {"bonus_all":200,  "cap_yeu":15, "phi":30000, "mo_ta":"+200 tất cả chỉ số"},
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -338,7 +338,7 @@ THANH_TICH = {
 #  KIẾM LINH
 # ══════════════════════════════════════════════════════════════
 KIEM_LINH_CAP = ["Sơ Sinh","Giác Ngộ","Trưởng Thành","Cường Hóa","Thức Tỉnh","Siêu Việt","Vô Thượng"]
-KIEM_LINH_BONUS = [0,5,12,22,35,55,80]  # % bonus sát thương
+KIEM_LINH_BONUS = [0, 25, 60, 120, 220, 400, 700]  # % bonus sát thương — ảo hơn nhiều!
 
 # ══════════════════════════════════════════════════════════════
 #  KHỞI TẠO
@@ -471,6 +471,8 @@ async def init_db():
 #  HELPER
 # ══════════════════════════════════════════════════════════════
 async def get_nv(uid): 
+    if db_pool is None:
+        raise RuntimeError("Database chưa kết nối! Kiểm tra DATABASE_URL.")
     async with db_pool.acquire() as c: 
         return await c.fetchrow("SELECT * FROM nhanvat WHERE user_id=$1", uid)
 
@@ -577,14 +579,14 @@ async def tao_nv(ctx, *, ten: str = None):
     toc_info = TOC[toc_chon]
     linh_can = random_linh_can()
     lc_info = LINH_CAN[linh_can]
-    hp_base = 100 + toc_info["bonus_hp"]
+    hp_base = 10000 + toc_info["bonus_hp"]
 
     async with db_pool.acquire() as c:
         await c.execute("""
             INSERT INTO nhanvat(user_id,ten,toc,linh_can,linh_luc,linh_luc_max,tan_cong,phong_thu)
             VALUES($1,$2,$3,$4,$5,$5,$6,$7)
         """, ctx.author.id, ten, toc_chon, linh_can, hp_base,
-           10+toc_info["bonus_tan_cong"], 5+toc_info["bonus_phong_thu"])
+           500+toc_info["bonus_tan_cong"], 200+toc_info["bonus_phong_thu"])
         await c.execute("INSERT INTO thong_ke(user_id) VALUES($1) ON CONFLICT DO NOTHING", ctx.author.id)
         await c.execute("INSERT INTO thap_thu_luyen(user_id) VALUES($1) ON CONFLICT DO NOTHING", ctx.author.id)
 
@@ -685,10 +687,10 @@ async def tu_luyen(ctx):
         pi = CONG_PHAP_PASSIVE.get(p,{})
         if "bonus_tuvi" in pi: tuvi_bonus += pi["bonus_tuvi"]
 
-    exp_gain = int((random.randint(30,80) + nv['canh_gioi']*10) * (1 + exp_bonus/100))
-    tv_gain  = random.randint(10,30) + tuvi_bonus
-    ll_hoi   = random.randint(5,20)
-    kl_exp   = random.randint(2,8)
+    exp_gain = int((random.randint(200,800) + nv['canh_gioi']*100) * (1 + exp_bonus/100))
+    tv_gain  = random.randint(80,300) + tuvi_bonus
+    ll_hoi   = random.randint(50,200)
+    kl_exp   = random.randint(10,30)
 
     new_exp = nv['exp'] + exp_gain
     new_cg  = nv['canh_gioi']
@@ -789,9 +791,9 @@ async def _xuat_quan(ctx, nv):
 
     gio_thuc = min(nv['bequan_gio'], 72)
     lc_info = LINH_CAN.get(nv['linh_can'],{})
-    exp_per_gio = (200 + nv['canh_gioi']*50) * (1 + lc_info.get("bonus_exp",0)/100)
+    exp_per_gio = (5000 + nv['canh_gioi']*500) * (1 + lc_info.get("bonus_exp",0)/100)
     exp_gain = int(exp_per_gio * gio_thuc * 3)
-    tv_gain  = int(gio_thuc * 20)
+    tv_gain  = int(gio_thuc * 200)
 
     new_exp = nv['exp'] + exp_gain
     new_cg  = nv['canh_gioi']
@@ -1685,7 +1687,12 @@ async def on_command_error(ctx, error):
         pass
     elif isinstance(error, commands.MemberNotFound):
         await ctx.send(embed=embed_mau("❌","Không tìm thấy người dùng!",0xFF4444))
+    elif isinstance(error, commands.CommandInvokeError):
+        original = error.original
+        print(f"❌ Lỗi lệnh [{ctx.command}]: {type(original).__name__}: {original}")
+        await ctx.send(embed=embed_mau("❌ Lỗi Hệ Thống", f"Có lỗi xảy ra khi thực thi lệnh!\n```{type(original).__name__}: {str(original)[:200]}```", 0xFF4444))
     else:
-        print(f"Lỗi: {error}")
+        print(f"Lỗi: {type(error).__name__}: {error}")
+        await ctx.send(embed=embed_mau("❌ Lỗi",f"```{type(error).__name__}: {str(error)[:200]}```",0xFF4444))
 
 bot.run(TOKEN)
