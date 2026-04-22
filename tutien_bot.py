@@ -6,17 +6,27 @@
 """
 
 import discord
-from discord.ext import commands, tasks
-import aiosqlite
+from discord.ext import commands
+import os
 import random
 import asyncio
-import os
-from datetime import datetime, timedelta
+import aiosqlite
+from datetime import datetime
 
-# ── CẤU HÌNH ──────────────────────────────────────────────
-TOKEN = "DISCORD_TOKEN"   # Dán token vào đây
-PREFIX = "!"
-DB_FILE = "tutien.db"
+# ===== LẤY TOKEN TỪ ENV =====
+TOKEN = os.getenv("TOKEN")
+
+if not TOKEN:
+    print("❌ Không tìm thấy TOKEN trong biến môi trường!")
+    exit()
+
+# ===== INTENTS =====
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+
+# ===== TẠO BOT =====
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ── CẢNH GIỚI TU TIÊN ─────────────────────────────────────
 CANH_GIOI = [
