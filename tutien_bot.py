@@ -38,15 +38,38 @@ CANH_GIOI = [
     "Thiên Đế","Tiên Đế","Thần Đế","Đạo Chủ","Thiên Đạo",
     # Vũ Trụ Cấp (25-36)
     "Siêu Thoát","Bất Hủ","Bất Diệt","Vĩnh Hằng","Chưởng Khống Giả","Sáng Thế",
-    "Sáng Thế Chủ","Toàn Năng","Toàn Tri","Siêu Việt","Vô Cực","Vô Thượng Đại Đạo"
+    "Sáng Thế Chủ","Toàn Năng","Toàn Tri","Siêu Việt","Vô Cực","Vô Thượng Đại Đạo",
+    # Hỗn Độn Cảnh (37-49)
+    "Hỗn Độn Sơ Khai","Hỗn Độn Trung Kỳ","Hỗn Độn Hậu Kỳ","Hỗn Độn Đỉnh Phong","Hỗn Độn Chi Tôn",
+    "Khai Thiên Giả","Tịch Địa Giả","Định Càn Khôn","Chưởng Thiên Địa","Vạn Giới Chi Chủ",
+    "Tam Giới Chí Tôn","Ngũ Giới Bá Chủ","Thất Giới Thần Tôn",
+    # Thái Cổ Cảnh (50-64)
+    "Thái Cổ Sơ Cảnh","Thái Cổ Trung Cảnh","Thái Cổ Hậu Cảnh","Thái Cổ Đỉnh Phong","Thái Cổ Chi Tôn",
+    "Thượng Cổ Thần Linh","Hồng Hoang Chi Thể","Nguyên Thủy Thần Tôn","Vô Thủy Vô Chung","Vô Lượng Thiên Tôn",
+    "Cửu Thiên Huyền Nữ","Thái Ất Kim Tiên","Linh Bảo Thiên Tôn","Nguyên Thủy Thiên Tôn","Vô Thượng Thái Cổ",
+    # Thần Thoại Cảnh (65-79)
+    "Thần Thoại Sơ Hiện","Thần Thoại Giác Tỉnh","Thần Thoại Phi Thăng","Thần Thoại Chứng Đạo","Thần Thoại Chi Cực",
+    "Cực Đạo Thần Tôn","Vạn Cổ Thần Đế","Siêu Việt Thần Thoại","Bất Sinh Bất Diệt","Vô Thượng Thần Tôn",
+    "Càn Khôn Chí Tôn","Vũ Trụ Bản Nguyên","Thời Không Chi Chủ","Nhân Quả Chứng Đạo","Đại Đạo Viên Mãn",
+    # Vô Thượng Cảnh (80-99) + Cực Đỉnh (100)
+    "Vô Thượng Sơ Đăng","Vô Thượng Trung Kỳ","Vô Thượng Hậu Kỳ","Vô Thượng Viên Mãn","Siêu Việt Vô Thượng",
+    "Vô Cực Chí Tôn","Vô Biên Thần Uy","Vô Lượng Thần Lực","Vô Thủy Thần Tôn","Chứng Đạo Thành Thánh",
+    "Thánh Đạo Sơ Chứng","Thánh Đạo Trung Chứng","Thánh Đạo Viên Mãn","Siêu Phàm Nhập Thánh","Bán Bộ Đại Đạo",
+    "Đại Đạo Sơ Ngộ","Đại Đạo Trung Ngộ","Đại Đạo Hậu Ngộ","Đại Đạo Chi Cực","Vạn Đạo Quy Nhất",
+    # 100 - Đỉnh tuyệt đối
+    "☀️ Vô Thượng Chí Tôn Đại Đạo"
 ]
 
 BAN_DO = {
-    "nhan_gioi":  {"ten":"🟢 Nhân Giới",  "cap_min":0,  "cap_max":5,  "mo_ta":"Early game — Phàm Nhân → Hóa Thần",     "phi_thuong":6},
-    "linh_gioi":  {"ten":"🔵 Linh Giới",  "cap_min":6,  "cap_max":9,  "mo_ta":"Mid game — Luyện Hư → Độ Kiếp",        "phi_thuong":10},
-    "tien_gioi":  {"ten":"🟣 Tiên Giới",  "cap_min":10, "cap_max":14, "mo_ta":"Late game — Tiên Nhân → Thánh Nhân",    "phi_thuong":15},
-    "thanh_gioi": {"ten":"🟡 Thánh Giới", "cap_min":15, "cap_max":24, "mo_ta":"End game — Thánh Nhân → Thiên Đạo",    "phi_thuong":25},
-    "vu_tru":     {"ten":"🔴 Vũ Trụ Cấp", "cap_min":25, "cap_max":36, "mo_ta":"Ultra end — Siêu Thoát → Vô Thượng",   "phi_thuong":None},
+    "nhan_gioi":  {"ten":"🟢 Nhân Giới",    "cap_min":0,  "cap_max":5,  "mo_ta":"Early game — Phàm Nhân → Hóa Thần",          "phi_thuong":6},
+    "linh_gioi":  {"ten":"🔵 Linh Giới",    "cap_min":6,  "cap_max":9,  "mo_ta":"Mid game — Luyện Hư → Độ Kiếp",              "phi_thuong":10},
+    "tien_gioi":  {"ten":"🟣 Tiên Giới",    "cap_min":10, "cap_max":14, "mo_ta":"Late game — Tiên Nhân → Thánh Nhân",          "phi_thuong":15},
+    "thanh_gioi": {"ten":"🟡 Thánh Giới",   "cap_min":15, "cap_max":24, "mo_ta":"End game — Thánh Nhân → Thiên Đạo",          "phi_thuong":25},
+    "vu_tru":     {"ten":"🔴 Vũ Trụ Cấp",   "cap_min":25, "cap_max":36, "mo_ta":"Ultra end — Siêu Thoát → Vô Thượng Đại Đạo","phi_thuong":37},
+    "hon_don":    {"ten":"🌀 Hỗn Độn Cảnh", "cap_min":37, "cap_max":49, "mo_ta":"Extreme — Hỗn Độn → Thất Giới Thần Tôn",    "phi_thuong":50},
+    "thai_co":    {"ten":"⚫ Thái Cổ Cảnh", "cap_min":50, "cap_max":64, "mo_ta":"Godlike — Thái Cổ → Vô Thượng Thái Cổ",     "phi_thuong":65},
+    "than_thoai": {"ten":"🌟 Thần Thoại Cảnh","cap_min":65,"cap_max":79,"mo_ta":"Mythic — Thần Thoại → Đại Đạo Viên Mãn",    "phi_thuong":80},
+    "vo_thuong":  {"ten":"☀️ Vô Thượng Cảnh","cap_min":80,"cap_max":100,"mo_ta":"Absolute — Vô Thượng → Vô Thượng Chí Tôn",  "phi_thuong":None},
 }
 
 def get_ban_do(canh_gioi_idx: int) -> str:
@@ -140,14 +163,54 @@ BOSS_LIST = [
     {"ten":"Vô Thượng Đại Đạo",    "hp":80000000,"sat_thuong":120000,"phan_thuong":80000000,"exp":80000000,"cap_yeu":34,"gioi":"vu_tru"},
 ]
 
-# Boss thế giới (1 boss/giới, hồi sinh 24h)
-BOSS_THE_GIOI = {
-    "nhan_gioi":  {"ten":"👑 Ma Đế Thiên Tuyệt",   "hp":5000000,  "sat_thuong":5000,  "phan_thuong":500000,  "exp":500000,  "cap_yeu":3},
-    "linh_gioi":  {"ten":"👑 Hư Không Chi Thần",    "hp":20000000, "sat_thuong":15000, "phan_thuong":2000000, "exp":2000000, "cap_yeu":7},
-    "tien_gioi":  {"ten":"👑 Thái Cổ Tiên Đế",      "hp":80000000, "sat_thuong":40000, "phan_thuong":8000000, "exp":8000000, "cap_yeu":11},
-    "thanh_gioi": {"ten":"👑 Thánh Giới Chi Chủ",   "hp":300000000,"sat_thuong":100000,"phan_thuong":30000000,"exp":30000000,"cap_yeu":16},
-    "vu_tru":     {"ten":"👑 Vô Thượng Thiên Đạo",  "hp":999999999,"sat_thuong":300000,"phan_thuong":100000000,"exp":100000000,"cap_yeu":26},
+# Boss thế giới — mỗi giới có danh sách boss, rotate mỗi lần hồi sinh
+BOSS_THE_GIOI_LIST = {
+    "nhan_gioi": [
+        {"ten":"💀 Ma Đế Thiên Tuyệt",     "hp":5_000_000,     "sat_thuong":5_000,   "phan_thuong":500_000,    "exp":500_000,    "cap_yeu":3,  "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"🔥 Hỏa Linh Đại Yêu",      "hp":8_000_000,     "sat_thuong":7_000,   "phan_thuong":800_000,    "exp":800_000,    "cap_yeu":4,  "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"⚡ Lôi Thiên Cổ Thú",       "hp":12_000_000,    "sat_thuong":9_000,   "phan_thuong":1_200_000,  "exp":1_200_000,  "cap_yeu":5,  "img":"https://i.imgur.com/7Wh5G3N.png"},
+    ],
+    "linh_gioi": [
+        {"ten":"🌀 Hư Không Chi Thần",      "hp":20_000_000,    "sat_thuong":15_000,  "phan_thuong":2_000_000,  "exp":2_000_000,  "cap_yeu":7,  "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"🌊 Thương Hải Cự Linh",     "hp":35_000_000,    "sat_thuong":22_000,  "phan_thuong":3_500_000,  "exp":3_500_000,  "cap_yeu":8,  "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"🌑 Hắc Ám Thần Tôn",        "hp":50_000_000,    "sat_thuong":30_000,  "phan_thuong":5_000_000,  "exp":5_000_000,  "cap_yeu":9,  "img":"https://i.imgur.com/7Wh5G3N.png"},
+    ],
+    "tien_gioi": [
+        {"ten":"🌸 Thái Cổ Tiên Đế",        "hp":80_000_000,    "sat_thuong":40_000,  "phan_thuong":8_000_000,  "exp":8_000_000,  "cap_yeu":11, "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"⚔️ Tiên Kiếm Thánh Tôn",    "hp":120_000_000,   "sat_thuong":60_000,  "phan_thuong":12_000_000, "exp":12_000_000, "cap_yeu":12, "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"🦋 Hồ Tiên Cổ Thần",        "hp":180_000_000,   "sat_thuong":80_000,  "phan_thuong":18_000_000, "exp":18_000_000, "cap_yeu":14, "img":"https://i.imgur.com/7Wh5G3N.png"},
+    ],
+    "thanh_gioi": [
+        {"ten":"👑 Thánh Giới Chi Chủ",      "hp":300_000_000,   "sat_thuong":100_000, "phan_thuong":30_000_000, "exp":30_000_000, "cap_yeu":16, "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"🌌 Thiên Đạo Hiển Linh",     "hp":500_000_000,   "sat_thuong":150_000, "phan_thuong":50_000_000, "exp":50_000_000, "cap_yeu":20, "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"💎 Hồng Hoang Sáng Thế Thần","hp":800_000_000,   "sat_thuong":200_000, "phan_thuong":80_000_000, "exp":80_000_000, "cap_yeu":23, "img":"https://i.imgur.com/7Wh5G3N.png"},
+    ],
+    "vu_tru": [
+        {"ten":"☀️ Vô Thượng Thiên Đạo",    "hp":999_999_999,   "sat_thuong":300_000, "phan_thuong":100_000_000,"exp":100_000_000,"cap_yeu":26, "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"🔮 Hỗn Độn Sáng Thế Linh",  "hp":2_000_000_000, "sat_thuong":500_000, "phan_thuong":200_000_000,"exp":200_000_000,"cap_yeu":30, "img":"https://i.imgur.com/7Wh5G3N.png"},
+        {"ten":"⚫ Vô Thượng Đại Đạo Thần", "hp":5_000_000_000, "sat_thuong":800_000, "phan_thuong":500_000_000,"exp":500_000_000,"cap_yeu":34, "img":"https://i.imgur.com/7Wh5G3N.png"},
+    ],
+    "hon_don": [
+        {"ten":"🌀 Hỗn Độn Ma Thần",        "hp":10_000_000_000,"sat_thuong":1_500_000,"phan_thuong":1_000_000_000,"exp":1_000_000_000,"cap_yeu":37,"img":"https://i.imgur.com/7Wh5G3N.png"},
+    ],
+    "thai_co": [
+        {"ten":"⚫ Thái Cổ Hung Thú",       "hp":50_000_000_000,"sat_thuong":5_000_000,"phan_thuong":5_000_000_000,"exp":5_000_000_000,"cap_yeu":50,"img":"https://i.imgur.com/7Wh5G3N.png"},
+    ],
+    "than_thoai": [
+        {"ten":"🌟 Thần Thoại Cổ Thần",     "hp":200_000_000_000,"sat_thuong":20_000_000,"phan_thuong":20_000_000_000,"exp":20_000_000_000,"cap_yeu":65,"img":"https://i.imgur.com/7Wh5G3N.png"},
+    ],
+    "vo_thuong": [
+        {"ten":"☀️ Vô Thượng Chí Tôn Thần", "hp":999_999_999_999,"sat_thuong":100_000_000,"phan_thuong":100_000_000_000,"exp":100_000_000_000,"cap_yeu":80,"img":"https://i.imgur.com/7Wh5G3N.png"},
+    ],
 }
+
+def get_boss_hien_tai(gioi: str, idx: int = 0) -> dict:
+    lst = BOSS_THE_GIOI_LIST.get(gioi, [])
+    if not lst: return None
+    return lst[idx % len(lst)]
+
+# Compat cũ
+BOSS_THE_GIOI = {k: v[0] for k, v in BOSS_THE_GIOI_LIST.items()}
 
 # ══════════════════════════════════════════════════════════════
 #  CÔNG PHÁP
@@ -417,6 +480,11 @@ intents.members = True
 bot = commands.Bot(command_prefix=PREFIX, intents=intents, help_command=None)
 db_pool: asyncpg.Pool = None
 
+# Channel ID để bot gửi thông báo boss thế giới — set qua !setchannel hoặc env var
+BOSS_CHANNEL_ID = int(os.getenv("BOSS_CHANNEL_ID", "0"))
+# Lưu message_id của thông báo boss đang active để edit
+boss_event_messages: dict = {}  # gioi -> message_id
+
 # ══════════════════════════════════════════════════════════════
 #  DATABASE
 # ══════════════════════════════════════════════════════════════
@@ -543,15 +611,40 @@ async def init_db():
         """)
         await c.execute("""
             CREATE TABLE IF NOT EXISTS boss_the_gioi (
-                gioi TEXT PRIMARY KEY,
-                hp_hien BIGINT, last_reset TIMESTAMPTZ DEFAULT NOW(),
-                nguoi_giet BIGINT DEFAULT 0
+                gioi        TEXT PRIMARY KEY,
+                hp_hien     BIGINT,
+                last_reset  TIMESTAMPTZ DEFAULT NOW(),
+                nguoi_giet  BIGINT DEFAULT 0,
+                boss_idx    INT DEFAULT 0,
+                trang_thai  TEXT DEFAULT 'chet',
+                xuat_hien_luc TIMESTAMPTZ
             )
         """)
+        # Migration thêm cột mới nếu chưa có
+        for col in [
+            "ALTER TABLE boss_the_gioi ADD COLUMN IF NOT EXISTS boss_idx INT DEFAULT 0",
+            "ALTER TABLE boss_the_gioi ADD COLUMN IF NOT EXISTS trang_thai TEXT DEFAULT 'chet'",
+            "ALTER TABLE boss_the_gioi ADD COLUMN IF NOT EXISTS xuat_hien_luc TIMESTAMPTZ",
+        ]:
+            try: await c.execute(col)
+            except: pass
+        await c.execute("""
+            CREATE TABLE IF NOT EXISTS boss_damage_log (
+                id          BIGSERIAL PRIMARY KEY,
+                gioi        TEXT,
+                user_id     BIGINT,
+                ten_nv      TEXT,
+                damage      BIGINT DEFAULT 0,
+                boss_session TIMESTAMPTZ,
+                created_at  TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        await c.execute("CREATE INDEX IF NOT EXISTS idx_bdl ON boss_damage_log(gioi, boss_session, damage DESC)")
         # Khởi tạo boss thế giới nếu chưa có
-        for gioi, b in BOSS_THE_GIOI.items():
+        for gioi in BOSS_THE_GIOI_LIST.keys():
+            b = BOSS_THE_GIOI_LIST[gioi][0]
             await c.execute("""
-                INSERT INTO boss_the_gioi (gioi, hp_hien) VALUES ($1,$2)
+                INSERT INTO boss_the_gioi (gioi, hp_hien, trang_thai) VALUES ($1,$2,'chet')
                 ON CONFLICT (gioi) DO NOTHING
             """, gioi, b["hp"])
         await c.execute("""
@@ -1429,80 +1522,341 @@ async def danh_boss(ctx, so_boss: int = None):
     await ctx.send(embed=embed_mau(f"⚔️ Boss: {boss['ten']}", result, color))
 
 # ══════════════════════════════════════════════════════════════
+#  HELPER BOSS THẾ GIỚI
+# ══════════════════════════════════════════════════════════════
+def format_dmg_bar(hp_hien, hp_max, width=20):
+    pct = max(0, min(1, hp_hien / max(hp_max, 1)))
+    filled = int(pct * width)
+    return "🟥" * filled + "⬛" * (width - filled)
+
+async def gui_phan_thuong_boss(gioi: str, boss_info: dict, session_time):
+    """Tính top damage, gửi kết quả và DM phần thưởng"""
+    async with db_pool.acquire() as c:
+        logs = await c.fetch("""
+            SELECT user_id, ten_nv, SUM(damage) as tong_damage
+            FROM boss_damage_log
+            WHERE gioi=$1 AND boss_session=$2
+            GROUP BY user_id, ten_nv
+            ORDER BY tong_damage DESC
+        """, gioi, session_time)
+
+    if not logs: return
+
+    total_hp = boss_info["hp"]
+    phan_thuong_co_ban = boss_info["phan_thuong"]
+
+    # Phần thưởng theo rank damage
+    def reward_by_damage(dmg):
+        pct = dmg / max(total_hp, 1) * 100
+        if pct >= 20:    return {"lt": int(phan_thuong_co_ban * 0.5), "item": "Tiên Nguyên Đan"}
+        elif pct >= 10:  return {"lt": int(phan_thuong_co_ban * 0.3), "item": "Thần Nguyên Đan"}
+        elif pct >= 5:   return {"lt": int(phan_thuong_co_ban * 0.15),"item": "Tụ Nguyên Đan"}
+        elif pct >= 1:   return {"lt": int(phan_thuong_co_ban * 0.05),"item": "Hồi Linh Đan"}
+        else:            return {"lt": int(phan_thuong_co_ban * 0.01),"item": None}
+
+    medals = ["🥇","🥈","🥉"] + ["🏅"]*50
+    ke_tieu_diet = logs[0]
+
+    # Build embed kết quả
+    top3_lines = ""
+    for i, row in enumerate(logs[:3]):
+        top3_lines += f"{medals[i]} **#{i+1} — {row['ten_nv']}**\n💥 Sát thương: **{row['tong_damage']:,}**\n\n"
+
+    # Phần thưởng top rank
+    rank_reward_lines = "🥇 Top 1: +50% phần thưởng cơ bản\n🥈 Top 2-3: +30% phần thưởng cơ bản\n🏅 Top 4-10: +15% phần thưởng cơ bản"
+
+    # Phần thưởng theo damage %
+    dmg_reward_lines = (
+        f"• ≥20% HP boss: Tiên Nguyên Đan + 50% LT\n"
+        f"• ≥10% HP boss: Thần Nguyên Đan + 30% LT\n"
+        f"• ≥5% HP boss: Tụ Nguyên Đan + 15% LT\n"
+        f"• ≥1% HP boss: Hồi Linh Đan + 5% LT\n"
+        f"• <1% HP boss: 1% LT"
+    )
+
+    result_embed = discord.Embed(
+        title=f"💀 BOSS THẾ GIỚI ĐÃ BỊ TIÊU DIỆT! 💀",
+        description=(
+            f"**{boss_info['ten']}** — **{BAN_DO[gioi]['ten']}** đã bị đánh bại bởi các tu sĩ!\n\n"
+            f"🗡️ **Kẻ tiêu diệt:** {ke_tieu_diet['ten_nv']}\n"
+            f"⏰ **Thời gian tồn tại:** 2 giờ\n\n"
+            f"🏆 **TOP 3 VINH DỰ**\n{top3_lines}"
+            f"🎁 **HỆ THỐNG PHẦN THƯỞNG**\n✅ Phần thưởng đã được tự động phân phối!\n\n"
+            f"🏅 **Top Damage Ranking:**\n{rank_reward_lines}\n\n"
+            f"💥 **Phần thưởng theo Damage:**\n{dmg_reward_lines}\n\n"
+            f"📩 Kiểm tra DM để xem phần thưởng của bạn!"
+        ),
+        color=0xFF0000
+    )
+    result_embed.set_image(url=boss_info.get("img",""))
+    result_embed.set_footer(text="⚡ Tu Tiên Bot V3 | Boss Thế Giới")
+
+    # Gửi vào channel boss
+    channel = bot.get_channel(BOSS_CHANNEL_ID)
+    if channel:
+        await channel.send(embed=result_embed)
+
+    # Phát thưởng và DM từng người
+    async with db_pool.acquire() as c:
+        for i, row in enumerate(logs):
+            uid = row['user_id']
+            nv = await get_nv(uid)
+            if not nv: continue
+
+            dmg = row['tong_damage']
+            reward = reward_by_damage(dmg)
+
+            # Bonus top rank
+            if i == 0:    bonus_lt = int(phan_thuong_co_ban * 0.5)
+            elif i <= 2:  bonus_lt = int(phan_thuong_co_ban * 0.3)
+            elif i <= 9:  bonus_lt = int(phan_thuong_co_ban * 0.15)
+            else:         bonus_lt = 0
+
+            total_lt = reward["lt"] + bonus_lt
+
+            # Cập nhật linh thạch + exp
+            await cap_nhat(uid,
+                linh_thach=nv['linh_thach'] + total_lt,
+                exp=nv['exp'] + boss_info["exp"] // max(len(logs), 1)
+            )
+
+            # Thêm item vào túi đồ
+            if reward["item"]:
+                await c.execute("""
+                    INSERT INTO tui_do(user_id, vat_pham, so_luong) VALUES($1,$2,1)
+                    ON CONFLICT(user_id, vat_pham) DO UPDATE SET so_luong=tui_do.so_luong+1
+                """, uid, reward["item"])
+
+            # DM phần thưởng
+            try:
+                user = await bot.fetch_user(uid)
+                dm_embed = discord.Embed(
+                    title="🎁 BẠN ĐÃ NHẬN ĐƯỢC PHẦN THƯỞNG BOSS THẾ GIỚI!",
+                    description=(
+                        f"Chúc mừng bạn đã nhận được phần thưởng từ Boss Thế Giới!\n\n"
+                        f"🗡️ **Tổng sát thương gây ra**\n```{dmg:,}```\n"
+                        f"**🎁 Phần thưởng đã nhận**\n"
+                        f"{'🥇 Top #'+str(i+1)+' Bonus: +'+f'{bonus_lt:,} Linh Thạch' + chr(10) if bonus_lt else ''}"
+                        f"🎁 **+{total_lt:,} Linh Thạch**\n"
+                        f"{'🎁 **'+reward['item']+'** × 1'+chr(10) if reward['item'] else ''}"
+                        f"\n✅ **Thông báo**\n"
+                        f"• Tất cả phần thưởng đã được tự động thêm vào inventory\n"
+                        f"• Sử dụng lệnh `!tuido` để xem kho đồ\n"
+                        f"• Cảm ơn bạn đã tham gia đánh boss!"
+                    ),
+                    color=0xFFD700
+                )
+                dm_embed.set_footer(text="Phần thưởng tự động thêm vào kho đồ")
+                await user.send(embed=dm_embed)
+            except: pass
+
+# ══════════════════════════════════════════════════════════════
 #  LỆNH: BOSS THẾ GIỚI
 # ══════════════════════════════════════════════════════════════
 @bot.command(name="bossthegioi", aliases=["btg","worldboss"])
 async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
-    """!bossthegioi — Xem | !bossthegioi tan — Đánh boss thế giới"""
     nv = await get_nv(ctx.author.id)
     if not nv:
         await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
 
     gioi = nv['ban_do']
-    boss_info = BOSS_THE_GIOI[gioi]
+    if gioi not in BOSS_THE_GIOI_LIST:
+        await ctx.send(embed=embed_mau("❌","Bản đồ của bạn chưa có Boss Thế Giới!",0xFF4444)); return
 
     async with db_pool.acquire() as c:
         boss_row = await c.fetchrow("SELECT * FROM boss_the_gioi WHERE gioi=$1", gioi)
 
-    # Reset boss sau 24h
-    if boss_row and (datetime.now(boss_row['last_reset'].tzinfo)-boss_row['last_reset']).total_seconds() > 86400:
-        async with db_pool.acquire() as c:
-            await c.execute("UPDATE boss_the_gioi SET hp_hien=$2, last_reset=NOW(), nguoi_giet=0 WHERE gioi=$1",
-                            gioi, boss_info["hp"])
-        boss_row = await (db_pool.acquire().__aenter__()).__aenter__()
-        async with db_pool.acquire() as c:
-            boss_row = await c.fetchrow("SELECT * FROM boss_the_gioi WHERE gioi=$1", gioi)
-
+    boss_idx = boss_row['boss_idx'] if boss_row else 0
+    boss_info = get_boss_hien_tai(gioi, boss_idx)
     hp_hien = boss_row['hp_hien'] if boss_row else boss_info["hp"]
+    trang_thai = boss_row['trang_thai'] if boss_row else 'chet'
 
     if not hanh_dong:
-        pct = int(hp_hien/boss_info["hp"]*20)
-        bar = "🟥"*pct + "⬛"*(20-pct)
-        await ctx.send(embed=embed_mau(f"👑 Boss Thế Giới — {BAN_DO[gioi]['ten']}", f"""
-**{boss_info['ten']}**
-❤️ HP: {hp_hien:,}/{boss_info['hp']:,}
-{bar}
-Cần Lv.**{boss_info['cap_yeu']}** | 💎{boss_info['phan_thuong']:,} | ✨{boss_info['exp']:,} EXP
+        # Hiển thị trạng thái boss
+        if trang_thai == 'chet':
+            next_spawn = boss_row['last_reset'] + timedelta(hours=1) if boss_row and boss_row['last_reset'] else datetime.utcnow()
+            now_utc = datetime.utcnow()
+            if hasattr(next_spawn, 'tzinfo') and next_spawn.tzinfo:
+                import pytz; now_utc = datetime.now(next_spawn.tzinfo)
+            con_lai = max(0, int((next_spawn - now_utc).total_seconds()))
+            h, m, s = con_lai//3600, (con_lai%3600)//60, con_lai%60
+            await ctx.send(embed=embed_mau(
+                f"💀 Boss Thế Giới — {BAN_DO[gioi]['ten']}",
+                f"**Boss đang hồi sinh...**\n⏰ Xuất hiện sau: **{h}h {m}m {s}s**\n\n"
+                f"Boss tiếp theo: **{boss_info['ten']}**\n"
+                f"❤️ HP: **{boss_info['hp']:,}** | Cần Lv.**{boss_info['cap_yeu']}**",
+                0x888888
+            )); return
 
-Dùng `!bossthegioi tan` để tham chiến!
-        """, 0xFF0000)); return
+        pct_bar = format_dmg_bar(hp_hien, boss_info["hp"])
+        e = discord.Embed(
+            title=f"👑 Boss Thế Giới — {BAN_DO[gioi]['ten']}",
+            description=(
+                f"**{boss_info['ten']}**\n\n"
+                f"❤️ HP: **{hp_hien:,}** / **{boss_info['hp']:,}**\n"
+                f"{pct_bar}\n\n"
+                f"⚔️ Cần Lv.**{boss_info['cap_yeu']}** | 💎 {boss_info['phan_thuong']:,} | ✨ {boss_info['exp']:,} EXP\n\n"
+                f"Dùng `!bossthegioi tan` để tham chiến!"
+            ),
+            color=0xFF0000
+        )
+        e.set_image(url=boss_info.get("img",""))
+        e.set_footer(text="⚡ Tu Tiên Bot V3 | Boss Thế Giới")
+        await ctx.send(embed=e)
+        return
 
     if hanh_dong == "tan":
-        if nv['canh_gioi']<boss_info["cap_yeu"]:
-            await ctx.send(embed=embed_mau("❌",f"Cần Lv.{boss_info['cap_yeu']}!",0xFF4444)); return
+        if trang_thai == 'chet':
+            await ctx.send(embed=embed_mau("💀","Boss chưa xuất hiện! Chờ thông báo hồi sinh.",0x888888)); return
+        if nv['canh_gioi'] < boss_info["cap_yeu"]:
+            await ctx.send(embed=embed_mau("❌",f"Cần Lv.**{boss_info['cap_yeu']}** ({CANH_GIOI[boss_info['cap_yeu']]})!",0xFF4444)); return
         if hp_hien <= 0:
-            await ctx.send(embed=embed_mau("💀","Boss đã bị hạ! Hồi sinh sau 24h.",0x888888)); return
+            await ctx.send(embed=embed_mau("💀","Boss đã bị hạ! Hồi sinh sau 1 giờ.",0x888888)); return
 
         cp_list = json.loads(nv['cong_phap'] or '[]')
         atk_bonus = sum(CONG_PHAP_TAN_CONG.get(cp,{}).get('sat_thuong',0) for cp in cp_list)
         atk_bonus += sum(DAI_THAN_THONG.get(cp,{}).get('sat_thuong',0) for cp in cp_list)
         kl_bonus = KIEM_LINH_BONUS[min(nv['kiem_linh_cap'],len(KIEM_LINH_BONUS)-1)]
         base_atk = nv['tan_cong'] + atk_bonus
-        dmg = int(random.randint(base_atk*5, base_atk*15) * (1+kl_bonus/100))
-        player_dmg = max(1, boss_info["sat_thuong"]//2 - nv['phong_thu'])
+        dmg = int(random.randint(base_atk*3, base_atk*10) * (1+kl_bonus/100))
+        player_dmg = max(1, boss_info["sat_thuong"]//4 - nv['phong_thu'])
 
         new_hp = max(0, hp_hien - dmg)
+
         async with db_pool.acquire() as c:
             await c.execute("UPDATE boss_the_gioi SET hp_hien=$2 WHERE gioi=$1", gioi, new_hp)
+            # Ghi damage log
+            await c.execute("""
+                INSERT INTO boss_damage_log(gioi, user_id, ten_nv, damage, boss_session)
+                VALUES($1,$2,$3,$4,$5)
+            """, gioi, ctx.author.id, nv['ten'], dmg, boss_row['xuat_hien_luc'])
 
-        reward_msg = ""
-        if new_hp <= 0:
-            phan_thuong = boss_info["phan_thuong"]
-            await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+phan_thuong,
-                           exp=nv['exp']+boss_info["exp"])
-            await cap_nhat_tk(ctx.author.id, tong_boss_giet=1, tong_lt_kiem=phan_thuong)
-            reward_msg = f"\n\n👑 **BOSS THẾ GIỚI ĐÃ BỊ HẠ!**\n💎 +{phan_thuong:,} | ✨ +{boss_info['exp']:,} EXP"
-
-        pct2 = int(new_hp/boss_info["hp"]*20)
-        bar2 = "🟥"*pct2+"⬛"*(20-pct2)
         await cap_nhat(ctx.author.id, linh_luc=max(1, nv['linh_luc']-player_dmg))
-        await ctx.send(embed=embed_mau(f"⚔️ Tham Chiến Boss Thế Giới", f"""
-💥 Gây **{dmg:,}** sát thương!
-Boss nhận **{player_dmg:,}** sát thương ngược lại.
-❤️ Boss HP: {new_hp:,}/{boss_info['hp']:,}
-{bar2}
-{reward_msg}
-        """, 0xFF6600 if new_hp>0 else 0xFFD700))
+
+        killed = new_hp <= 0
+        if killed:
+            next_idx = (boss_idx + 1) % len(BOSS_THE_GIOI_LIST[gioi])
+            next_boss = get_boss_hien_tai(gioi, next_idx)
+            async with db_pool.acquire() as c:
+                await c.execute("""
+                    UPDATE boss_the_gioi SET hp_hien=$2, trang_thai='chet', nguoi_giet=$3,
+                    last_reset=NOW(), boss_idx=$4
+                    WHERE gioi=$1
+                """, gioi, next_boss["hp"], ctx.author.id, next_idx)
+            # Phân phối phần thưởng
+            await gui_phan_thuong_boss(gioi, boss_info, boss_row['xuat_hien_luc'])
+
+        pct_bar2 = format_dmg_bar(new_hp, boss_info["hp"])
+        color = 0xFFD700 if killed else 0xFF6600
+        msg = (
+            f"💥 Gây **{dmg:,}** sát thương!\n"
+            f"🛡️ Boss phản đòn **{player_dmg:,}** sát thương\n\n"
+            f"❤️ Boss HP: **{new_hp:,}** / **{boss_info['hp']:,}**\n"
+            f"{pct_bar2}\n"
+        )
+        if killed:
+            msg += f"\n💀 **BOSS THẾ GIỚI ĐÃ BỊ TIÊU DIỆT!**\n🏆 Phần thưởng đã gửi về DM!\n⏰ Boss tiếp theo xuất hiện sau **1 giờ**!"
+        e2 = discord.Embed(title=f"⚔️ Tham Chiến Boss Thế Giới", description=msg, color=color)
+        e2.set_footer(text="⚡ Tu Tiên Bot V3 | Vạn Cổ Trường Tồn")
+        await ctx.send(embed=e2)
+
+# ══════════════════════════════════════════════════════════════
+#  LỆNH: SET CHANNEL BOSS
+# ══════════════════════════════════════════════════════════════
+@bot.command(name="setchannel", aliases=["setbosschannel"])
+@commands.has_permissions(administrator=True)
+async def set_channel(ctx, loai: str = "boss"):
+    global BOSS_CHANNEL_ID
+    BOSS_CHANNEL_ID = ctx.channel.id
+    await ctx.send(embed=embed_mau("✅ Đã Thiết Lập",f"Kênh **#{ctx.channel.name}** sẽ nhận thông báo Boss Thế Giới!",0x55FF55))
+
+# ══════════════════════════════════════════════════════════════
+#  TASK: TỰ ĐỘNG THÔNG BÁO BOSS XUẤT HIỆN (mỗi 2 giờ thực)
+# ══════════════════════════════════════════════════════════════
+@tasks.loop(hours=2)
+async def auto_boss_spawn():
+    """Mỗi 2 giờ: spawn boss ở TẤT CẢ các giới cùng lúc, không block nhau"""
+    if db_pool is None: return
+    channel = bot.get_channel(BOSS_CHANNEL_ID)
+    if not channel: return
+
+    # Spawn tất cả các giới song song
+    tasks_list = [_spawn_boss_gioi(gioi, bd_info, channel)
+                  for gioi, bd_info in BAN_DO.items()
+                  if gioi in BOSS_THE_GIOI_LIST]
+    await asyncio.gather(*tasks_list, return_exceptions=True)
+
+async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
+    """Spawn boss 1 giới: thông báo → đợi 2h → đóng nếu chưa chết"""
+    try:
+        async with db_pool.acquire() as c:
+            boss_row = await c.fetchrow("SELECT * FROM boss_the_gioi WHERE gioi=$1", gioi)
+
+        boss_idx = boss_row['boss_idx'] if boss_row else 0
+        boss_info = get_boss_hien_tai(gioi, boss_idx)
+
+        # Set trạng thái SỐNG
+        async with db_pool.acquire() as c:
+            await c.execute("""
+                UPDATE boss_the_gioi SET hp_hien=$2, trang_thai='song',
+                xuat_hien_luc=NOW(), last_reset=NOW() WHERE gioi=$1
+            """, gioi, boss_info["hp"])
+
+        # Embed thông báo xuất hiện
+        e = discord.Embed(
+            title=f"⚠️ BOSS THẾ GIỚI XUẤT HIỆN — {bd_info['ten']} ⚠️",
+            description=(
+                f"**{boss_info['ten']}** đã giáng lâm {bd_info['ten']}!\n\n"
+                f"❤️ HP: **{boss_info['hp']:,}**\n"
+                f"⚔️ Sát Thương: **{boss_info['sat_thuong']:,}**\n"
+                f"💎 Phần Thưởng: **{boss_info['phan_thuong']:,}** Linh Thạch\n"
+                f"✨ EXP: **{boss_info['exp']:,}**\n"
+                f"🔑 Yêu cầu: Lv.**{boss_info['cap_yeu']}** "
+                f"({CANH_GIOI[min(boss_info['cap_yeu'], len(CANH_GIOI)-1)]})\n\n"
+                f"⏰ **Boss tồn tại 2 giờ!**\n"
+                f"Dùng lệnh `!bossthegioi tan` để tham chiến!\n"
+                f"Phần thưởng tính theo damage — đánh càng nhiều nhận càng nhiều!\n\n"
+                f"🏆 Top damage nhận bonus đặc biệt!"
+            ),
+            color=0xFF0000
+        )
+        e.set_image(url=boss_info.get("img", ""))
+        e.set_footer(text=f"⚡ Tu Tiên Bot V3 | Boss xuất hiện lúc {datetime.utcnow().strftime('%H:%M UTC')}")
+        await channel.send(
+            f"@everyone 🔔 **Boss Thế Giới xuất hiện tại {bd_info['ten']}!**",
+            embed=e
+        )
+
+        # Đợi 2 giờ (không block task khác vì dùng gather)
+        await asyncio.sleep(7200)
+
+        # Kiểm tra còn sống không
+        async with db_pool.acquire() as c:
+            row = await c.fetchrow("SELECT trang_thai, hp_hien, xuat_hien_luc FROM boss_the_gioi WHERE gioi=$1", gioi)
+
+        if row and row['trang_thai'] == 'song' and row['hp_hien'] > 0:
+            # Boss chưa bị giết — đóng, chuyển sang boss tiếp theo
+            next_idx = (boss_idx + 1) % len(BOSS_THE_GIOI_LIST[gioi])
+            next_boss = get_boss_hien_tai(gioi, next_idx)
+            async with db_pool.acquire() as c:
+                await c.execute("""
+                    UPDATE boss_the_gioi SET trang_thai='chet', hp_hien=$2,
+                    boss_idx=$3, last_reset=NOW() WHERE gioi=$1
+                """, gioi, next_boss["hp"], next_idx)
+
+            # Phát thưởng cho người đã đánh
+            if row['xuat_hien_luc']:
+                await gui_phan_thuong_boss(gioi, boss_info, row['xuat_hien_luc'])
+
+            await channel.send(embed=embed_mau(
+                f"⏰ Boss Rút Lui — {bd_info['ten']}",
+                f"**{boss_info['ten']}** đã rút lui sau 2 giờ!\n"
+                f"Phần thưởng đã gửi về DM các tu sĩ đã tham chiến!\n"
+                f"⏰ Boss mới sẽ xuất hiện sau **2 giờ**!",
+                0x888888
+            ))
+    except Exception as err:
+        print(f"❌ Lỗi spawn boss [{gioi}]: {err}")
 
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: THÁP THỬ LUYỆN
@@ -1963,8 +2317,92 @@ async def tui_do(ctx):
     await paginate(ctx, td_pages)
 
 # ══════════════════════════════════════════════════════════════
-#  LỆNH: BXH & STATS
+#  LỆNH: HÀNH TRANG (túi đồ chi tiết đẹp như ảnh)
 # ══════════════════════════════════════════════════════════════
+@bot.command(name="hanhtrang", aliases=["ht","inventory","inv"])
+async def hanh_trang(ctx, member: discord.Member = None):
+    """!hanhtrang — Xem hành trang chi tiết theo từng loại"""
+    target = member or ctx.author
+    nv = await get_nv(target.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Chưa có nhân vật!",0xFF4444)); return
+
+    async with db_pool.acquire() as c:
+        items = await c.fetch("SELECT vat_pham, so_luong FROM tui_do WHERE user_id=$1 ORDER BY vat_pham", target.id)
+
+    if not items:
+        await ctx.send(embed=embed_mau(f"🎒 Hành Trang — {nv['ten']}","Túi đồ trống! Dùng `!khampha` để tìm vật phẩm.",0x888888)); return
+
+    # Phân loại vật phẩm
+    trang_bi_lines   = []
+    vat_lieu_lines   = []
+    su_dung_lines    = []
+    khac_lines       = []
+
+    # Icon phân loại
+    LOAI_ICON = {
+        "hoi_phuc": "💊", "tu_vi": "✨", "dot_pha": "🔮", "do_kiep": "⚡",
+        "buff_atk": "⚔️", "buff_def": "🛡️", "buff_hp": "💧", "buff_all": "⭐",
+    }
+
+    for it in items:
+        ten = it['vat_pham']
+        sl  = it['so_luong']
+        khoa = "🔒" if sl <= 0 else ""
+
+        # Trang bị (có phẩm chất icon)
+        is_tb = any(pc in ten for pc in PHAM_CHAT)
+        if is_tb:
+            trang_bi_lines.append(f"⚔️ **{ten}** {'(khóa)' if khoa else '(không khóa)'} — Số lượng: {sl}")
+            continue
+
+        # Đan dược / vật phẩm sử dụng
+        dan = DAN_DUOC.get(ten)
+        if dan:
+            icon = LOAI_ICON.get(dan['loai'], '💊')
+            su_dung_lines.append(f"{icon} **{ten}** {'(khóa)' if khoa else '(không khóa)'} — Số lượng: {sl}")
+            continue
+
+        # Cây linh thảo → nguyên liệu
+        if ten in CAY_LINH:
+            vat_lieu_lines.append(f"🌿 **{ten}** {'(khóa)' if khoa else '(không khóa)'} — Số lượng: {sl}")
+            continue
+
+        # Còn lại
+        khac_lines.append(f"📦 **{ten}** — Số lượng: {sl}")
+
+    total = len(items)
+    pages = []
+
+    def build_section(title, lines, page_size=12):
+        result = []
+        for i in range(0, max(len(lines), 1), page_size):
+            chunk = lines[i:i+page_size]
+            result.append((title, "\n".join(chunk) if chunk else "_Trống_"))
+        return result
+
+    # Trang tổng quan
+    overview = (
+        f"💎 **Linh Thạch:** {nv['linh_thach']:,}\n"
+        f"🔑 **KNB:** {nv.get('ma_khi', 0):,}\n\n"
+        f"⚔️ **Trang Bị:** {len(trang_bi_lines)} vật phẩm\n"
+        f"🌿 **Vật Liệu:** {len(vat_lieu_lines)} vật phẩm\n"
+        f"💊 **Vật Phẩm Sử Dụng:** {len(su_dung_lines)} vật phẩm\n"
+        f"📦 **Khác:** {len(khac_lines)} vật phẩm\n\n"
+        f"📊 Tổng vật phẩm (trong túi): **{total}**"
+    )
+    pages.append((f"🎒 KHÔNG GIAN TRỮ VẬT GIỚI CỦA {nv['ten'].upper()}", overview))
+
+    if trang_bi_lines:
+        pages += build_section("⚔️ TRANG BỊ:", trang_bi_lines)
+    if vat_lieu_lines:
+        pages += build_section("🌿 VẬT LIỆU:", vat_lieu_lines)
+    if su_dung_lines:
+        pages += build_section("💊 VẬT PHẨM SỬ DỤNG:", su_dung_lines)
+    if khac_lines:
+        pages += build_section("📦 KHÁC:", khac_lines)
+
+    await paginate(ctx, pages, color=0x2B2D31)
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: CÂU CÁ
 # ══════════════════════════════════════════════════════════════
@@ -2464,7 +2902,9 @@ HELP_PAGES = [
 **🗺️ Bản Đồ**
 🟢 Nhân Giới (Lv.0-5) → 🔵 Linh Giới (Lv.6-9)
 🟣 Tiên Giới (Lv.10-14) → 🟡 Thánh Giới (Lv.15-24)
-🔴 Vũ Trụ Cấp (Lv.25-36)
+🔴 Vũ Trụ Cấp (Lv.25-36) → 🌀 Hỗn Độn (Lv.37-49)
+⚫ Thái Cổ (Lv.50-64) → 🌟 Thần Thoại (Lv.65-79)
+☀️ Vô Thượng (Lv.80-100)
 *Phi thăng tự động khi đủ cảnh giới!*
 
 **🐉 Tộc:** Long, Thần, Nhân, Tiên, Ma, Thú
@@ -2490,7 +2930,10 @@ async def on_ready():
             print(f"🗄️ Đang kết nối database... (lần {attempt}/5)")
             await init_db()
             print(f"✅ Bot Tu Tiên V3 MEGA online: {bot.user}")
-            await bot.change_presence(activity=discord.Game(name="Tu Tiên V3 | !help | 36 Cảnh Giới"))
+            await bot.change_presence(activity=discord.Game(name="Tu Tiên V3 | !help | Lv.100"))
+            if not auto_boss_spawn.is_running():
+                auto_boss_spawn.start()
+                print("✅ Task auto_boss_spawn đã khởi động!")
             return
         except Exception as e:
             print(f"❌ Lỗi kết nối DB (lần {attempt}/5): {type(e).__name__}: {e}")
@@ -2499,7 +2942,6 @@ async def on_ready():
                 await asyncio.sleep(10)
             else:
                 print("💀 Không thể kết nối database sau 5 lần thử!")
-                print("👉 Kiểm tra DATABASE_URL có đúng không:")
                 print(f"   DB_URL = {DB_URL[:40] if DB_URL else 'KHÔNG CÓ'}...")
                 await bot.change_presence(activity=discord.Game(name="❌ Lỗi DB - Kiểm tra DATABASE_URL"))
 
