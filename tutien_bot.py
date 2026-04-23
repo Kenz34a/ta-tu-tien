@@ -90,18 +90,19 @@ def random_linh_can() -> str:
 #  LỰC CHIẾN
 # ══════════════════════════════════════════════════════════════
 def tinh_luc_chien(nv) -> int:
-    base = nv['tan_cong']*50 + nv['phong_thu']*35 + nv['linh_luc_max']*3
-    cg_bonus = nv['canh_gioi'] * 50000
-    tv_bonus = nv['tu_vi'] // 10
+    base = nv['tan_cong'] * 8 + nv['phong_thu'] * 6 + nv['linh_luc_max'] // 20
+    cg = nv['canh_gioi']
+    cg_bonus = int(500 * (2.2 ** cg))   # exponential nhưng không quá điên
+    tv_bonus = nv['tu_vi'] // 500
     return base + cg_bonus + tv_bonus
 
 def luc_chien_rank(lc: int) -> str:
-    if lc < 100000:     return "⚪ Phàm"
-    if lc < 500000:     return "🟢 Tinh Anh"
-    if lc < 2000000:    return "🔵 Cường Giả"
-    if lc < 10000000:   return "🟣 Tôn Giả"
-    if lc < 50000000:   return "🟡 Hoàng Giả"
-    if lc < 500000000:  return "🔴 Đế Giả"
+    if lc < 5_000:         return "⚪ Phàm"
+    if lc < 50_000:        return "🟢 Tinh Anh"
+    if lc < 500_000:       return "🔵 Cường Giả"
+    if lc < 5_000_000:     return "🟣 Tôn Giả"
+    if lc < 50_000_000:    return "🟡 Hoàng Giả"
+    if lc < 1_000_000_000: return "🔴 Đế Giả"
     return "⚫ Siêu Việt"
 
 # ══════════════════════════════════════════════════════════════
@@ -288,6 +289,70 @@ CAY_LINH = {
     "Thần Linh Thảo": {"thoi_gian":7200, "so_luong":(2,5),  "gia_hat":5000, "cap_yeu":10},
     "Tiên Đào":       {"thoi_gian":86400,"so_luong":(1,3),  "gia_hat":50000,"cap_yeu":15},
 }
+
+# ══════════════════════════════════════════════════════════════
+#  CÂU CÁ
+# ══════════════════════════════════════════════════════════════
+CAU_CA_POOL = [
+    {"ten":"Cá Chép Bạc",    "loai":"⚪ Thường",   "ty_le":28, "tu_vi":80,     "lt":200,    "mo_ta":"Cá thường"},
+    {"ten":"Cá Vàng Linh",   "loai":"⚪ Thường",   "ty_le":22, "tu_vi":250,    "lt":600,    "mo_ta":"Có linh khí nhẹ"},
+    {"ten":"Cá Ngọc Thạch",  "loai":"🟢 Hiếm",    "ty_le":16, "tu_vi":800,    "lt":2000,   "mo_ta":"Linh khí dồi dào"},
+    {"ten":"Cá Hỏa Long",    "loai":"🟢 Hiếm",    "ty_le":12, "tu_vi":2000,   "lt":5000,   "mo_ta":"Vảy rực lửa"},
+    {"ten":"Cá Băng Tinh",   "loai":"🔵 Quý",     "ty_le":8,  "tu_vi":6000,   "lt":15000,  "mo_ta":"Lạnh buốt xương"},
+    {"ten":"Cá Thiên Lôi",   "loai":"🔵 Quý",     "ty_le":6,  "tu_vi":15000,  "lt":40000,  "mo_ta":"Điện chạy khắp thân"},
+    {"ten":"Cá Cửu Âm",      "loai":"🟣 Thần",    "ty_le":4,  "tu_vi":50000,  "lt":150000, "mo_ta":"Âm khí cực nặng"},
+    {"ten":"Cá Thần Long",   "loai":"🟡 Cổ Thần", "ty_le":2,  "tu_vi":200000, "lt":800000, "mo_ta":"Con cháu thần long"},
+    {"ten":"Tiên Ngư",       "loai":"⭐ Tiên Phẩm","ty_le":1,  "tu_vi":1000000,"lt":5000000,"mo_ta":"Truyền thuyết"},
+    {"ten":"Rác Rưởi",       "loai":"💀 Rác",      "ty_le":1,  "tu_vi":0,      "lt":0,      "mo_ta":"Vận đen"},
+]
+
+CAN_CAU_DATA = {
+    "Đại Đạo Cần":    {"bonus":1.0, "mo_ta":"Cần câu cơ bản (mặc định)"},
+    "Linh Ngư Câu":   {"bonus":1.3, "mo_ta":"+30% tỉ lệ cá hiếm", "phi":5000,   "cap_yeu":2},
+    "Huyền Thiết Câu":{"bonus":1.6, "mo_ta":"+60% tỉ lệ cá hiếm", "phi":20000,  "cap_yeu":5},
+    "Tiên Ngư Câu":   {"bonus":2.5, "mo_ta":"+150% tỉ lệ cá quý", "phi":100000, "cap_yeu":10},
+}
+
+# ══════════════════════════════════════════════════════════════
+#  PET
+# ══════════════════════════════════════════════════════════════
+PET_DATA = {
+    "Linh Thú Nhỏ":  {"icon":"🐱","bonus_exp":5,  "bonus_lc":500,    "phi":10000,   "cap_yeu":2},
+    "Hỏa Hồ":        {"icon":"🦊","bonus_exp":10, "bonus_lc":2000,   "phi":50000,   "cap_yeu":5},
+    "Lôi Điêu":      {"icon":"🦅","bonus_exp":15, "bonus_lc":8000,   "phi":200000,  "cap_yeu":8},
+    "Băng Kỳ Lân":   {"icon":"🦄","bonus_exp":20, "bonus_lc":30000,  "phi":1000000, "cap_yeu":12},
+    "Hắc Long":      {"icon":"🐲","bonus_exp":35, "bonus_lc":120000, "phi":5000000, "cap_yeu":18},
+}
+
+# ══════════════════════════════════════════════════════════════
+#  TÔNG MÔN CẤP ĐỘ
+# ══════════════════════════════════════════════════════════════
+TONG_MON_CAP = {
+    1:{"ten":"Tiểu Phái",  "max_tv":10,  "bonus_exp":0,  "exp_can":0},
+    2:{"ten":"Trung Phái", "max_tv":20,  "bonus_exp":5,  "exp_can":10_000},
+    3:{"ten":"Đại Phái",   "max_tv":30,  "bonus_exp":10, "exp_can":100_000},
+    4:{"ten":"Tông Môn",   "max_tv":50,  "bonus_exp":15, "exp_can":1_000_000},
+    5:{"ten":"Đại Tông",   "max_tv":100, "bonus_exp":20, "exp_can":10_000_000},
+    6:{"ten":"Thánh Địa",  "max_tv":200, "bonus_exp":30, "exp_can":100_000_000},
+}
+
+# ══════════════════════════════════════════════════════════════
+#  ĐAN DƯỢC MỞ RỘNG (thêm vào DAN_DUOC)
+# ══════════════════════════════════════════════════════════════
+DAN_DUOC.update({
+    "Bát Ấn Xin":         {"loai":"tu_vi",  "exp":100,      "gia":100,         "cap_yeu":0,  "rare":"⚪"},
+    "Huyền Tức Y":        {"loai":"tu_vi",  "exp":600,      "gia":5_000,       "cap_yeu":2,  "rare":"🟢"},
+    "Hoa Liễn Châu":      {"loai":"tu_vi",  "exp":2_500,    "gia":20_000,      "cap_yeu":4,  "rare":"🔵"},
+    "Lôi Minh Thảo":      {"loai":"tu_vi",  "exp":10_000,   "gia":100_000,     "cap_yeu":7,  "rare":"🟣"},
+    "Thiên Lôi Ấn":       {"loai":"tu_vi",  "exp":40_000,   "gia":500_000,     "cap_yeu":10, "rare":"🟡"},
+    "Vạn Kiếp Châu":      {"loai":"tu_vi",  "exp":150_000,  "gia":2_000_000,   "cap_yeu":15, "rare":"⭐"},
+    "Hạo Nhiên Lệnh Bài": {"loai":"tu_vi",  "exp":600_000,  "gia":10_000_000,  "cap_yeu":20, "rare":"💫"},
+    "Huyết Sát Lệnh":     {"loai":"tu_vi",  "exp":2_500_000,"gia":50_000_000,  "cap_yeu":25, "rare":"✨"},
+    "Long Hồn Hộ Thân Ấn":{"loai":"buff_all","all":50,      "gia":200_000_000, "cap_yeu":15, "rare":"🌟"},
+    "Đồng Hoàng Chuông":  {"loai":"hoi_phuc","hp":999999,   "gia":100_000,     "cap_yeu":0,  "rare":"🟢"},
+    "Phá Giới Đan":       {"loai":"dot_pha", "ti_le":50,    "gia":50_000,      "cap_yeu":5,  "rare":"🔵"},
+    "Khai Thiên Phù":     {"loai":"tu_vi",   "exp":10_000_000,"gia":5_000_000_000,"cap_yeu":30,"rare":"☀️"},
+})
 
 # ══════════════════════════════════════════════════════════════
 #  THÀNH TÍCH
@@ -496,6 +561,36 @@ async def init_db():
                 last_thap TIMESTAMPTZ
             )
         """)
+        # ── V4: Cột mới ──
+        for col_sql in [
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS mana INT DEFAULT 100",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS mana_max INT DEFAULT 100",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS tho_nguyen BIGINT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS so_do_kiep INT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS ma_khi INT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS pet TEXT DEFAULT ''",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS bi_canh TEXT DEFAULT ''",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS can_cau TEXT DEFAULT 'Đại Đạo Cần'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS kiem_linh_active BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS cap_do INT DEFAULT 1",
+            "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS exp_mon BIGINT DEFAULT 0",
+        ]:
+            await c.execute(col_sql)
+        await c.execute("""
+            CREATE TABLE IF NOT EXISTS lich_su_cau (
+                id BIGSERIAL PRIMARY KEY,
+                user_id BIGINT REFERENCES nhanvat(user_id) ON DELETE CASCADE,
+                ten_ca TEXT, loai TEXT, gia_tri BIGINT,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        await c.execute("""
+            CREATE TABLE IF NOT EXISTS dan_ngay (
+                user_id BIGINT, ngay DATE DEFAULT CURRENT_DATE,
+                so_dung INT DEFAULT 0,
+                PRIMARY KEY (user_id, ngay)
+            )
+        """)
     print("✅ DB V3 sẵn sàng!")
 
 # ══════════════════════════════════════════════════════════════
@@ -526,15 +621,17 @@ async def cap_nhat_tk(uid, **kw):
         await c.execute(f"UPDATE thong_ke SET {cols},updated_at=NOW() WHERE user_id=$1", uid, *kw.values())
 
 def exp_can(cg):
-    # Cảnh giới thấp (0-9): dễ lên, scale nhẹ
-    # Cảnh giới giữa (10-19): khó dần, scale vừa
-    # Cảnh giới cao (20+): cực kỳ khó, scale hàm mũ mạnh
-    if cg < 10:
-        return int((cg + 1) * 5_000 * (1.4 ** cg))
-    elif cg < 20:
-        return int((cg + 1) * 50_000 * (1.6 ** (cg - 10)))
-    else:
-        return int((cg + 1) * 2_000_000 * (2.0 ** (cg - 20)))
+    # Nhân Giới (0-5): vài trăm lần tu = lên 1 cấp
+    # Linh Giới (6-9): vài nghìn lần tu
+    # Tiên Giới (10-14): chục nghìn lần tu
+    # Thánh Giới (15-24): trăm nghìn lần tu
+    # Vũ Trụ (25-36): triệu lần tu
+    if cg == 0: return 2_000
+    if cg < 6:  return int(2_000  * (3.2 ** cg))
+    if cg < 10: return int(80_000 * (3.5 ** (cg - 6)))
+    if cg < 15: return int(8_000_000 * (3.0 ** (cg - 10)))
+    if cg < 25: return int(200_000_000 * (2.8 ** (cg - 15)))
+    return int(20_000_000_000 * (3.5 ** (cg - 25)))
 
 def embed_mau(title, desc, color=0xAA55FF):
     e = discord.Embed(title=title, description=desc, color=color)
@@ -785,45 +882,140 @@ async def thong_tin(ctx, member: discord.Member = None):
     nv = await get_nv(target.id)
     if not nv:
         await ctx.send(embed=embed_mau("❌","Chưa có nhân vật! Dùng `!taonv <tên>`",0xFF4444)); return
+
     async with db_pool.acquire() as c:
         tk = await c.fetchrow("SELECT * FROM thong_ke WHERE user_id=$1", target.id)
         tt_count = await c.fetchval("SELECT COUNT(*) FROM thanh_tich WHERE user_id=$1", target.id)
-        dao_lu_row = await c.fetchrow("SELECT user1,user2 FROM ket_duyen WHERE user1=$1 OR user2=$1", target.id)
+        mon_row = await c.fetchrow("SELECT ten, cap_do FROM tong_mon WHERE ten=$1", nv['tong_mon']) if nv['tong_mon'] else None
+        thap_row = await c.fetchrow("SELECT tang_hien FROM thap_thu_luyen WHERE user_id=$1", target.id)
+        bequan_row = None
+        if nv['last_bequan'] and nv['bequan_gio'] > 0:
+            end = nv['last_bequan'] + timedelta(hours=nv['bequan_gio'])
+            now_utc = datetime.now(nv['last_bequan'].tzinfo)
+            if now_utc < end:
+                bequan_row = int((end - now_utc).total_seconds())
 
     cg  = nv['canh_gioi']
     lc  = tinh_luc_chien(nv)
-    bar = "█"*int((nv['exp']/exp_can(cg))*10)+"░"*(10-int((nv['exp']/exp_can(cg))*10))
-    toc = TOC.get(nv['toc'],{})
-    lc_info = LINH_CAN.get(nv['linh_can'],{})
-    pvp_total = (tk['tong_pvp_thang']+tk['tong_pvp_thua']) if tk else 0
-    wr = f"{int(tk['tong_pvp_thang']/pvp_total*100)}%" if pvp_total>0 else "N/A"
-    kl_cap = KIEM_LINH_CAP[min(nv['kiem_linh_cap'], len(KIEM_LINH_CAP)-1)]
-    dao_lu_str = "Chưa có"
-    if dao_lu_row:
-        pid = dao_lu_row['user2'] if dao_lu_row['user1']==target.id else dao_lu_row['user1']
+    toc = TOC.get(nv['toc'], {})
+    lci = LINH_CAN.get(nv['linh_can'], {})
+    kl_cap_str = KIEM_LINH_CAP[min(nv['kiem_linh_cap'], len(KIEM_LINH_CAP)-1)]
+    kl_active  = "🟢 Đã kích hoạt" if nv.get('kiem_linh_active') else "🔴 Chưa"
+    pet_str    = PET_DATA.get(nv.get('pet',''), {}).get('icon','') + ' ' + nv.get('pet','Chưa có') if nv.get('pet') else "Chưa có"
+    dao_lu_str = "Độc thân"
+    if nv.get('dao_lu'):
         try:
-            pu = await bot.fetch_user(pid); dao_lu_str = pu.display_name
+            pu = await bot.fetch_user(int(nv['dao_lu']))
+            dao_lu_str = pu.display_name
         except: dao_lu_str = "Đạo Lữ"
 
-    e = embed_mau(f"📜 {nv['ten']}", f"""
-{toc.get('icon','👤')} **Tộc:** {nv['toc']} | {lc_info.get('icon','⭐')} **Linh Căn:** {nv['linh_can']}
-🏔️ **Cảnh Giới:** {CANH_GIOI[cg]} (Lv.{cg}) | 🗺️ {BAN_DO[nv['ban_do']]['ten']}
-📊 **EXP:** {nv['exp']:,}/{exp_can(cg):,} [{bar}]
-⚡ **Lực Chiến:** {lc:,} {luc_chien_rank(lc)}
+    bd = BAN_DO.get(nv['ban_do'], {})
+    gioi_icon = bd.get('ten','').split()[0] if bd.get('ten') else '🌐'
+    phi_str = f"🟢 Đã Phi Thăng {bd.get('ten','')}" if nv.get('phi_thuong_status') else f"⭕ Chưa Phi Thăng"
 
-💧 **HP:** {nv['linh_luc']:,}/{nv['linh_luc_max']:,}
-⚔️ **Tấn Công:** {nv['tan_cong']:,} | 🛡️ **Phòng Thủ:** {nv['phong_thu']:,}
-💎 **Linh Thạch:** {nv['linh_thach']:,}
-✨ **Tu Vi:** {nv['tu_vi']:,}
+    tong_mon_str = "Không"
+    if nv['tong_mon'] and mon_row:
+        cap_info = TONG_MON_CAP.get(mon_row['cap_do'], {})
+        tong_mon_str = f"{nv['tong_mon']} (Cấp {mon_row['cap_do']} — {cap_info.get('ten','')})"
 
-⚔️ **Đạo Chính:** {nv['dao_chinh'] or 'Chưa ngộ đạo'}
-📿 **Đạo Phụ:** {nv['dao_phu'] or 'Chưa có'}
-🗡️ **Kiếm Linh:** {kl_cap}
-💍 **Đạo Lữ:** {dao_lu_str}
-🏯 **Tông Môn:** {nv['tong_mon'] or 'Vô Môn'}
-🏅 **Thành Tích:** {tt_count}/{len(THANH_TICH)}
-👹 Boss: {tk['tong_boss_giet'] if tk else 0} | ⚔️ PvP: {tk['tong_pvp_thang'] if tk else 0}T/{tk['tong_pvp_thua'] if tk else 0}B ({wr})
-    """)
+    mana_hien = nv.get('mana', 100)
+    mana_max  = nv.get('mana_max', 100)
+    tho_nguyen = nv.get('tho_nguyen', 0)
+
+    # Trang bị slot
+    tb_dict = json.loads(nv.get('trang_bi','{}') or '{}')
+
+    # Tính ngày tạo
+    ngay_tao = nv['created_at'].strftime('%d/%m/%Y') if nv.get('created_at') else 'N/A'
+
+    e = discord.Embed(
+        title=f"Trạng Thái - {nv['ten']}",
+        color=0x2B2D31
+    )
+
+    # Cột trái: Thông tin cơ bản
+    thong_tin_co_ban = (
+        f"{toc.get('icon','👤')} Tộc: **{nv['toc']}**\n"
+        f"☯️ Đạo: **{nv['dao_chinh'] or 'Chưa ngộ'}**\n"
+        f"📿 Đạo Phụ: **{nv['dao_phu'] or 'Chưa có'}**\n"
+        f"{lci.get('icon','⭐')} Linh Căn: **{nv['linh_can']}**\n"
+        f"🏯 Tông Môn: **{tong_mon_str}**\n"
+        f"💍 Đạo Lữ: **{dao_lu_str}**"
+    )
+
+    # Cột giữa: Tu Vi & Cảnh Giới
+    bar_len = 10
+    exp_pct = min(1.0, nv['exp'] / exp_can(cg)) if exp_can(cg) > 0 else 1.0
+    bar = "█" * int(exp_pct * bar_len) + "░" * (bar_len - int(exp_pct * bar_len))
+    tu_vi_canh_gioi = (
+        f"✨ Tu Vi: **{nv['tu_vi']:,}**\n"
+        f"🏔️ Cảnh Giới: **{CANH_GIOI[cg]}**\n"
+        f"({'Sơ ký' if exp_pct < 0.33 else 'Đại viên mãn' if exp_pct > 0.9 else 'Trung kỳ'})\n"
+        f"⚡ Chiến Lực: **{lc:,}**\n"
+        f"{luc_chien_rank(lc)}\n"
+        f"🌐 Giới: {gioi_icon} {bd.get('ten','')}\n"
+        f"🚀 Phi Thăng: {phi_str}"
+    )
+
+    # Cột phải: Sinh Tồn & Nghề
+    sinh_ton = (
+        f"🕰️ Thọ Nguyên: **{tho_nguyen:,}** năm\n"
+        f"❤️ Trạng Thái: bình thường\n"
+        f"💙 Mana (Câu cá):\n"
+        f"**{mana_hien}/{mana_max}**\n"
+        f"🌀 Ma Khí: **{nv.get('ma_khi',0)}**"
+    )
+    if bequan_row:
+        h, m = bequan_row // 3600, (bequan_row % 3600) // 60
+        sinh_ton += f"\n🧘 Đang bế quan: Còn **{h}h {m}m**"
+
+    e.add_field(name="📋 Thông Tin Cơ Bản", value=thong_tin_co_ban, inline=True)
+    e.add_field(name="🌀 Tu Vi & Cảnh Giới", value=tu_vi_canh_gioi, inline=True)
+    e.add_field(name="💊 Sinh Tồn & Nghề", value=sinh_ton, inline=True)
+
+    # Tài sản
+    tai_san = (
+        f"💎 Nguyên Thạch: **{nv['linh_thach']:,}**\n"
+        f"💀 Số lần độ kiếp: **{nv.get('so_do_kiep', nv.get('so_chet',0))}**"
+    )
+    # Trang bị
+    slot_icons = {
+        "Công Pháp": "🔥", "Vũ Khí":"⚔️", "Giáp":"🛡️",
+        "Pháp Bảo":"💎", "Bí Cảnh":"🌌", "Nhẫn":"💍",
+        "Cần Câu":"🎣", "Kiếm Linh":"⚔️"
+    }
+    trang_bi_lines = []
+    cp_list = json.loads(nv.get('cong_phap','[]') or '[]')
+    if cp_list:
+        trang_bi_lines.append(f"🔥 Công Pháp: **{cp_list[-1]}**")
+    for loai, ten in tb_dict.items():
+        icon = slot_icons.get(loai, "📦")
+        trang_bi_lines.append(f"{icon} {loai}: **{ten}**")
+    if nv.get('bi_canh'):
+        trang_bi_lines.append(f"🌌 Bí Cảnh: **{nv['bi_canh']}**")
+    can_cau_hien = nv.get('can_cau','Đại Đạo Cần')
+    trang_bi_lines.append(f"🎣 Cần Câu: **{can_cau_hien}**")
+    trang_bi_lines.append(f"⚔️ Kiếm Linh: {kl_active}")
+
+    trang_bi_str = "\n".join(trang_bi_lines) if trang_bi_lines else "Chưa có"
+
+    e.add_field(name="💰 Tài Sản", value=tai_san, inline=True)
+    e.add_field(name="🎽 Trang Bị", value=trang_bi_str, inline=True)
+
+    # Đặc biệt
+    dac_biet_lines = []
+    if bequan_row:
+        h, m = bequan_row // 3600, (bequan_row % 3600) // 60
+        dac_biet_lines.append(f"🧘 Đang bế quan: Còn **{h}h {m}m**")
+    if nv.get('pet'):
+        pi = PET_DATA.get(nv['pet'],{})
+        dac_biet_lines.append(f"{pi.get('icon','🐾')} Pet: **{nv['pet']}** (+{pi.get('bonus_exp',0)}% EXP)")
+    if dac_biet_lines:
+        e.add_field(name="✨ Đặc Biệt", value="\n".join(dac_biet_lines), inline=False)
+
+    e.set_footer(text=f"Tạo nhân vật: {ngay_tao} | Hoạt động cuối: {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}")
+    if target.avatar:
+        e.set_thumbnail(url=target.avatar.url)
     await ctx.send(embed=e)
 
 # ══════════════════════════════════════════════════════════════
@@ -835,40 +1027,65 @@ async def tu_luyen(ctx):
     if not nv:
         await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
 
-    # Kiểm tra đang bế quan
+    # Kiểm tra bế quan
     if nv['last_bequan'] and nv['bequan_gio'] > 0:
         end = nv['last_bequan'] + timedelta(hours=nv['bequan_gio'])
         if datetime.now(nv['last_bequan'].tzinfo) < end:
-            con_lai = (end - datetime.now(nv['last_bequan'].tzinfo)).seconds // 60
-            await ctx.send(embed=embed_mau("🧘 Đang Bế Quan",f"Còn **{con_lai}** phút nữa mới xuất quan!",0xFFAA00)); return
+            con_lai = int((end - datetime.now(nv['last_bequan'].tzinfo)).total_seconds()) // 60
+            await ctx.send(embed=embed_mau("🧘 Đang Bế Quan",f"Còn **{con_lai}** phút nữa!\n`!xuatquan` để xuất quan.",0xFFAA00)); return
 
     cd = cooldown_con(nv['last_tulyen'], 60)
     if cd > 0:
-        await ctx.send(embed=embed_mau("⏳","Còn **{:.0f}s**!".format(cd),0xFFAA00)); return
+        await ctx.send(embed=embed_mau("⏳",f"Còn **{cd:.0f}s** nữa!",0xFFAA00)); return
 
-    lc_info = LINH_CAN.get(nv['linh_can'],{})
-    toc_info = TOC.get(nv['toc'],{})
-    exp_bonus = lc_info.get("bonus_exp",0) + toc_info.get("bonus_exp",0)
-    tuvi_bonus = lc_info.get("bonus_tulyen",0)
-
-    # Passive bonus
-    passives = json.loads(nv['cong_phap'] or '[]')
-    for p in passives:
-        pi = CONG_PHAP_PASSIVE.get(p,{})
-        if "bonus_tuvi" in pi: tuvi_bonus += pi["bonus_tuvi"]
-
+    lc_info  = LINH_CAN.get(nv['linh_can'], {})
+    toc_info = TOC.get(nv['toc'], {})
+    exp_bonus  = lc_info.get("bonus_exp", 0) + toc_info.get("bonus_exp", 0)
+    tuvi_bonus = lc_info.get("bonus_tulyen", 0)
     cg = nv['canh_gioi']
 
-    # EXP gain scale mạnh theo cảnh giới — càng cao càng nhiều
-    base_exp = int(500 * (1.8 ** cg))  # hàm mũ tăng nhanh
-    exp_gain = int((base_exp + random.randint(base_exp//2, base_exp)) * (1 + exp_bonus/100))
+    # Passive bonus
+    for p in json.loads(nv['cong_phap'] or '[]'):
+        pi = CONG_PHAP_PASSIVE.get(p, {})
+        if "bonus_tuvi" in pi: tuvi_bonus += pi["bonus_tuvi"]
 
-    # Tu Vi gain cũng scale theo cảnh giới
-    base_tv = int(200 * (1.5 ** cg))
-    tv_gain = int((base_tv + random.randint(0, base_tv//2)) + tuvi_bonus)
+    # Pet bonus
+    pet_info = PET_DATA.get(nv.get('pet',''), {})
+    pet_exp_bonus = pet_info.get("bonus_exp", 0)
 
-    ll_hoi  = int(random.randint(100, 500) * (1 + cg * 0.1))
-    kl_exp  = random.randint(10, 30)
+    # Dao chinh bonus
+    dao_info = DAO_CHINH.get(nv['dao_chinh'], {})
+    dao_exp_bonus = dao_info.get("bonus_exp", 0) if 'bonus_exp' in dao_info else 0
+
+    total_bonus = exp_bonus + pet_exp_bonus + dao_exp_bonus
+
+    # EXP gain: ~0.6-1% exp cần mỗi cảnh giới/lần tu
+    base_exp = max(100, int(exp_can(cg) * 0.008))
+    exp_gain = int(random.randint(base_exp, int(base_exp * 1.4)) * (1 + total_bonus / 100))
+
+    # Tu Vi gain cân bằng — tăng dần theo cảnh giới
+    base_tv = int(50 * (1.6 ** min(cg, 18)) * (1 + max(0, cg - 18) * 0.3))
+    tv_gain  = int(random.randint(base_tv, int(base_tv * 1.5)) + tuvi_bonus)
+
+    # Thọ nguyên tăng mỗi lần tu
+    tho_gain = random.randint(1, 3) * (cg + 1)
+
+    # Mana hồi
+    mana_hoi = random.randint(2, 8)
+
+    # HP hồi
+    ll_hoi = max(1, int(nv['linh_luc_max'] * 0.05 * random.uniform(0.5, 1.5)))
+
+    # Kiếm Linh exp
+    kl_exp  = random.randint(5, 15)
+    new_kl_exp = nv['kiem_linh_exp'] + kl_exp
+    new_kl_cap = nv['kiem_linh_cap']
+    kl_threshold = (new_kl_cap + 1) * 300
+    kl_msg = ""
+    if new_kl_exp >= kl_threshold and new_kl_cap < len(KIEM_LINH_CAP) - 1:
+        new_kl_exp -= kl_threshold
+        new_kl_cap += 1
+        kl_msg = f"\n⚔️ **Kiếm Linh → {KIEM_LINH_CAP[new_kl_cap]}**!"
 
     new_exp = nv['exp'] + exp_gain
     new_cg  = cg
@@ -876,78 +1093,91 @@ async def tu_luyen(ctx):
     dp_cnt  = 0
     tv_tru_msg = ""
 
-    # Xử lý đột phá — có tỉ lệ thất bại tăng theo cảnh giới
-    while new_exp >= exp_can(new_cg) and new_cg < len(CANH_GIOI)-1:
-        # Tỉ lệ thành công đột phá: cao nhất 95% (cg 0), thấp nhất ~20% (cg 35)
-        ti_le_thanh_cong = max(20, 95 - new_cg * 2)
-
-        # Bonus linh căn giúp tăng tỉ lệ
+    # Xử lý đột phá
+    while new_exp >= exp_can(new_cg) and new_cg < len(CANH_GIOI) - 1:
         lc_bonus = {"Thiên Linh Căn":30,"Biến Linh Căn":20,"Tứ Linh Căn":15,
                     "Tam Linh Căn":10,"Song Linh Căn":5,"Đơn Linh Căn":5,"Phế Linh Căn":0}
-        ti_le_thanh_cong = min(99, ti_le_thanh_cong + lc_bonus.get(nv['linh_can'], 0))
-
-        if random.randint(1, 100) <= ti_le_thanh_cong:
-            # Đột phá THÀNH CÔNG
+        ti_le = min(99, max(20, 90 - new_cg * 2) + lc_bonus.get(nv['linh_can'], 0))
+        if random.randint(1, 100) <= ti_le:
             new_exp -= exp_can(new_cg)
-            new_cg += 1
-            dp_cnt += 1
-            dp_msg = f"\n\n🎉 **ĐỘT PHÁ → {CANH_GIOI[new_cg]}**! 🎉\n_(Tỉ lệ: {ti_le_thanh_cong}%)_"
+            new_cg  += 1
+            dp_cnt  += 1
+            dp_msg   = f"\n\n🎉 **ĐỘT PHÁ → {CANH_GIOI[new_cg]}** (tỉ lệ {ti_le}%)! 🎉"
         else:
-            # Đột phá THẤT BẠI — trừ 20-40% tu vi, KHÔNG giảm cảnh giới
-            phan_tram_tru = random.randint(20, 40)
-            tru_tv = int(nv['tu_vi'] * phan_tram_tru / 100)
-            new_exp = exp_can(new_cg) - 1  # giữ nguyên ở ngưỡng, không vượt qua
-            tv_tru_msg = (
-                f"\n\n💥 **ĐỘT PHÁ THẤT BẠI!**\n"
-                f"Tỉ lệ thành công: **{ti_le_thanh_cong}%** — Vận khí không thuận!\n"
-                f"🌀 Tu Vi bị tổn hao **{phan_tram_tru}%** (−{tru_tv:,})\n"
-                f"_(Cảnh giới không giảm — tu luyện thêm để thử lại!)_"
-            )
+            pct_tru = random.randint(15, 30)
+            tru_tv  = int(nv['tu_vi'] * pct_tru / 100)
+            new_exp = exp_can(new_cg) - 1
+            tv_tru_msg = (f"\n\n💥 **ĐỘT PHÁ THẤT BẠI** (tỉ lệ {ti_le}%)!\n"
+                          f"🌀 −{tru_tv:,} Tu Vi ({pct_tru}%) — Cảnh giới không giảm")
             await cap_nhat(ctx.author.id, tu_vi=max(0, nv['tu_vi'] - tru_tv))
-            break  # dừng, không tiếp tục đột phá
+            break
 
-    # Kiếm Linh exp
-    new_kl_exp = nv['kiem_linh_exp'] + kl_exp
-    new_kl_cap = nv['kiem_linh_cap']
-    kl_threshold = (new_kl_cap+1) * 200
-    if new_kl_exp >= kl_threshold and new_kl_cap < len(KIEM_LINH_CAP)-1:
-        new_kl_exp -= kl_threshold; new_kl_cap += 1
-        dp_msg += f"\n⚔️ **Kiếm Linh thức tỉnh: {KIEM_LINH_CAP[new_kl_cap]}**!"
-
-    # Phi thăng
+    # Phi thăng auto
     ban_do_hien = nv['ban_do']
+    phi_msg = ""
     bd_info = BAN_DO[ban_do_hien]
-    phi_thuong_msg = ""
     if new_cg > bd_info["cap_max"] and bd_info["phi_thuong"]:
         for bdk, bdv in BAN_DO.items():
             if bdv["cap_min"] <= new_cg <= bdv["cap_max"]:
                 ban_do_hien = bdk
-                phi_thuong_msg = f"\n🚀 **PHI THĂNG → {bdv['ten']}**!"
+                phi_msg = f"\n🚀 **PHI THĂNG → {bdv['ten']}**! 🎊"
+                async with db_pool.acquire() as c:
+                    await c.execute("INSERT INTO thanh_tich(user_id,ma_tt) VALUES($1,'phi_thuong') ON CONFLICT DO NOTHING", ctx.author.id)
                 break
 
+    new_mana = min(nv.get('mana', 100) + mana_hoi, nv.get('mana_max', 100))
+    new_tho  = nv.get('tho_nguyen', 0) + tho_gain
+
     await cap_nhat(ctx.author.id,
-        exp=new_exp, tu_vi=nv['tu_vi']+tv_gain, canh_gioi=new_cg,
-        linh_luc=min(nv['linh_luc']+ll_hoi, nv['linh_luc_max']),
+        exp=new_exp, tu_vi=nv['tu_vi'] + tv_gain, canh_gioi=new_cg,
+        linh_luc=min(nv['linh_luc'] + ll_hoi, nv['linh_luc_max']),
+        mana=new_mana, tho_nguyen=new_tho,
         kiem_linh_cap=new_kl_cap, kiem_linh_exp=new_kl_exp,
         ban_do=ban_do_hien, last_tulyen=datetime.utcnow()
     )
     await cap_nhat_tk(ctx.author.id, tong_tulyen=1, tong_exp=exp_gain, dot_pha_count=dp_cnt)
-    await them_nhat_ky(ctx.author.id,"tulyen",f"+{exp_gain:,} EXP, +{tv_gain:,} Tu Vi → {CANH_GIOI[new_cg]}")
+    await them_nhat_ky(ctx.author.id, "tulyen", f"+{exp_gain:,} EXP, +{tv_gain:,} Tu Vi → {CANH_GIOI[new_cg]}")
 
     nv2 = await get_nv(ctx.author.id)
-    async with db_pool.acquire() as c: tk=await c.fetchrow("SELECT * FROM thong_ke WHERE user_id=$1",ctx.author.id)
+    async with db_pool.acquire() as c:
+        tk = await c.fetchrow("SELECT * FROM thong_ke WHERE user_id=$1", ctx.author.id)
     await kiem_tra_thanh_tich(ctx, ctx.author.id, nv2, tk)
 
-    # Tỉ lệ đột phá kế tiếp (nếu gần ngưỡng)
-    ti_le_ke = max(20, min(99, 95 - new_cg * 2))
-    can_them = exp_can(new_cg) - new_exp
-    ti_le_str = f"\n🎯 Tỉ lệ ĐP tiếp: **{ti_le_ke}%** | Cần thêm **{can_them:,}** EXP" if new_cg < len(CANH_GIOI)-1 else ""
+    # Hiển thị bonus multipliers như ảnh mẫu
+    bonus_lines = []
+    if toc_info.get("bonus_exp"): bonus_lines.append(f"{nv['toc']} (+{toc_info['bonus_exp']}%)")
+    lc_exp = lc_info.get("bonus_exp", 0)
+    if lc_exp: bonus_lines.append(f"{nv['linh_can']} (x{1+lc_exp/100:.1f})")
+    if nv['dao_chinh'] and dao_exp_bonus: bonus_lines.append(f"{nv['dao_chinh']} (x{1+dao_exp_bonus/100:.1f})")
+    if pet_exp_bonus: bonus_lines.append(f"Pet Bonus (x{1+pet_exp_bonus/100:.1f})")
+    # Tông môn bonus
+    if nv['tong_mon']:
+        async with db_pool.acquire() as c:
+            mon = await c.fetchrow("SELECT cap_do FROM tong_mon WHERE ten=$1", nv['tong_mon'])
+        if mon:
+            mon_bonus = TONG_MON_CAP.get(mon['cap_do'], {}).get("bonus_exp", 0)
+            if mon_bonus: bonus_lines.append(f"Tông Môn Cấp {mon['cap_do']} (x{1+mon_bonus/100:.1f})")
 
-    await ctx.send(embed=embed_mau("🧘 Tu Luyện", f"""
-✨ **+{exp_gain:,} EXP** | 🌀 **+{tv_gain:,} Tu Vi** | 💧 **+{ll_hoi:,} HP**
-📊 EXP: {new_exp:,}/{exp_can(new_cg):,} | **{CANH_GIOI[new_cg]}**{ti_le_str}
-{dp_msg}{tv_tru_msg}{phi_thuong_msg}
-    """, 0x55FFAA if not tv_tru_msg else 0xFF6600))
+    bonus_str = "\n".join(f"  {b}" for b in bonus_lines) if bonus_lines else "  (không có)"
+    ti_le_ke = max(20, min(99, 90 - new_cg * 2))
+
+    color = 0x55FFAA if not tv_tru_msg else 0xFF6600
+    await ctx.send(embed=discord.Embed(
+        title="✨ Tu Luyện Thành Công!",
+        description=f"""
+{nv['ten']} thổ nạp linh khí, tu vi thăng hoa!
+
+🔮 **Tu Vi** ✨ **Cảnh Giới** ⚡ **Chiến Lực (Ước tính)**
++{tv_gain:,} (Tổng: {nv['tu_vi']+tv_gain:,})  {CANH_GIOI[new_cg]}  {tinh_luc_chien(nv2):,}
+
+📈 **Bonus**
+{bonus_str}
+
+🎯 Tỉ lệ ĐP tiếp: **{ti_le_ke}%** | Cần: **{max(0, exp_can(new_cg)-new_exp):,}** EXP
+💧 Mana: {new_mana}/{nv.get('mana_max',100)} | 🕰️ Thọ Nguyên: +{tho_gain} năm
+{dp_msg}{tv_tru_msg}{phi_msg}{kl_msg}
+        """, color=color
+    ).set_footer(text="⚡ Tu Tiên Bot V4 | Vạn Cổ Trường Tồn"))
 
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: BẾ QUAN
@@ -1735,6 +1965,354 @@ async def tui_do(ctx):
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: BXH & STATS
 # ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════
+#  LỆNH: CÂU CÁ
+# ══════════════════════════════════════════════════════════════
+@bot.command(name="cau", aliases=["fishing","fish"])
+async def cau_ca(ctx, so_luong: int = 1):
+    """!cau [số] — Câu cá tiêu mana, nhận tu vi và linh thạch (30s/lần)"""
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+
+    # Cooldown 30s
+    async with db_pool.acquire() as c:
+        last_cau = await c.fetchval("SELECT MAX(created_at) FROM lich_su_cau WHERE user_id=$1", ctx.author.id)
+    if last_cau:
+        cd = cooldown_con(last_cau, 30)
+        if cd > 0:
+            await ctx.send(embed=embed_mau("⏳",f"Còn **{cd:.0f}s** nữa mới câu được!",0xFFAA00)); return
+
+    so_luong = max(1, min(so_luong, 10))
+    mana_hien = nv.get('mana', 100)
+    mana_moi_lan = 10
+    tong_mana_can = mana_moi_lan * so_luong
+
+    if mana_hien < mana_moi_lan:
+        await ctx.send(embed=embed_mau("💙 Hết Mana",f"Cần **{mana_moi_lan}** Mana/lần câu. Hiện có: **{mana_hien}**\nTu luyện để hồi mana!",0xFF4444)); return
+
+    so_luong = min(so_luong, mana_hien // mana_moi_lan)
+    can_cau_hien = nv.get('can_cau', 'Đại Đạo Cần')
+    can_info = CAN_CAU_DATA.get(can_cau_hien, {"bonus": 1.0})
+    bonus_mul = can_info["bonus"]
+
+    # Xây pool câu cá với bonus cần
+    pool_goc = []
+    for ca in CAU_CA_POOL:
+        ty_le_thuc = max(1, int(ca["ty_le"] * (bonus_mul if "Quý" in ca["loai"] or "Thần" in ca["loai"] else 1.0)))
+        pool_goc.extend([ca] * ty_le_thuc)
+
+    ket_qua = []
+    tong_tv = 0; tong_lt = 0
+    async with db_pool.acquire() as c:
+        for _ in range(so_luong):
+            ca = random.choice(pool_goc)
+            tv = int(ca["tu_vi"] * random.uniform(0.8, 1.3))
+            lt = int(ca["lt"] * random.uniform(0.8, 1.3))
+            tong_tv += tv; tong_lt += lt
+            ket_qua.append(f"{ca['loai']} **{ca['ten']}** — +{tv:,} Tu Vi, +{lt:,} 💎")
+            await c.execute("INSERT INTO lich_su_cau(user_id,ten_ca,loai,gia_tri) VALUES($1,$2,$3,$4)",
+                            ctx.author.id, ca['ten'], ca['loai'], lt)
+
+    new_mana = max(0, mana_hien - mana_moi_lan * so_luong)
+    await cap_nhat(ctx.author.id,
+        tu_vi=nv['tu_vi'] + tong_tv,
+        linh_thach=nv['linh_thach'] + tong_lt,
+        mana=new_mana
+    )
+    await them_nhat_ky(ctx.author.id, "cau_ca", f"Câu {so_luong} lần, +{tong_tv:,} Tu Vi, +{tong_lt:,} 💎")
+
+    await ctx.send(embed=discord.Embed(
+        title=f"🎣 Câu Cá — {nv['ten']}",
+        description="\n".join(ket_qua) + f"\n\n**Tổng:** +{tong_tv:,} Tu Vi | +{tong_lt:,} 💎\n💙 Mana: {new_mana}/{nv.get('mana_max',100)}",
+        color=0x55AAFF
+    ).set_footer(text="⚡ Tu Tiên Bot V4"))
+
+@bot.command(name="lichsucau", aliases=["lsc"])
+async def lich_su_cau_cmd(ctx):
+    """!lichsucau — Xem 10 lần câu gần nhất"""
+    async with db_pool.acquire() as c:
+        rows = await c.fetch("SELECT ten_ca,loai,gia_tri,created_at FROM lich_su_cau WHERE user_id=$1 ORDER BY created_at DESC LIMIT 10", ctx.author.id)
+    if not rows:
+        await ctx.send(embed=embed_mau("🎣","Chưa câu lần nào!")); return
+    lines = [f"{r['loai']} **{r['ten_ca']}** — {r['gia_tri']:,}💎 | `{r['created_at'].strftime('%d/%m %H:%M')}`" for r in rows]
+    nv = await get_nv(ctx.author.id)
+    await ctx.send(embed=embed_mau(f"🎣 Lịch Sử Câu — {nv['ten'] if nv else '?'}", "\n".join(lines)))
+
+# ══════════════════════════════════════════════════════════════
+#  LỆNH: PET
+# ══════════════════════════════════════════════════════════════
+@bot.command(name="pet")
+async def pet_cmd(ctx, hanh_dong: str = None, *, ten_pet: str = None):
+    """!pet — Xem | !pet mua <tên> — Mua pet | !pet info — Xem pet hiện tại"""
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+
+    if not hanh_dong or hanh_dong == "list":
+        lines = []
+        for k,v in PET_DATA.items():
+            lock = "🔒" if nv['canh_gioi'] < v['cap_yeu'] else "✅"
+            lines.append(f"{lock} {v['icon']} **{k}** — +{v['bonus_exp']}% EXP | 💎{v['phi']:,} | Cần Lv.{v['cap_yeu']}")
+        await ctx.send(embed=embed_mau("🐾 Danh Sách Pet", "\n".join(lines))); return
+
+    if hanh_dong == "info":
+        pet_ten = nv.get('pet','')
+        if not pet_ten:
+            await ctx.send(embed=embed_mau("🐾","Chưa có pet! Dùng `!pet mua <tên>`")); return
+        pi = PET_DATA.get(pet_ten, {})
+        await ctx.send(embed=embed_mau(f"🐾 Pet — {pi.get('icon','')} {pet_ten}",
+            f"📈 Bonus EXP: +{pi.get('bonus_exp',0)}%\n⚡ Bonus Chiến Lực: +{pi.get('bonus_lc',0):,}")); return
+
+    if hanh_dong == "mua" and ten_pet:
+        pi = PET_DATA.get(ten_pet)
+        if not pi:
+            await ctx.send(embed=embed_mau("❌","Pet không tồn tại!",0xFF4444)); return
+        if nv['canh_gioi'] < pi['cap_yeu']:
+            await ctx.send(embed=embed_mau("❌",f"Cần Lv.{pi['cap_yeu']}!",0xFF4444)); return
+        if nv['linh_thach'] < pi['phi']:
+            await ctx.send(embed=embed_mau("❌",f"Cần **{pi['phi']:,}** 💎",0xFF4444)); return
+        await cap_nhat(ctx.author.id, pet=ten_pet, linh_thach=nv['linh_thach']-pi['phi'])
+        await ctx.send(embed=embed_mau(f"🐾 Đã Nhận Pet!", f"{pi['icon']} **{ten_pet}** đã theo bạn!\n+{pi['bonus_exp']}% EXP mỗi lần tu luyện.", 0x55FFAA))
+
+# ══════════════════════════════════════════════════════════════
+#  LỆNH: TÔNG MÔN NÂNG CẤP
+# ══════════════════════════════════════════════════════════════
+@bot.command(name="lapmon")
+async def lap_mon(ctx, *, ten_mon: str = None):
+    """!lapmon <tên> — Lập tông môn (Lv.3+, 1000💎)"""
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if not ten_mon:
+        await ctx.send(embed=embed_mau("❌","Dùng: `!lapmon <tên tông môn>`",0xFF4444)); return
+    if nv['canh_gioi'] < 3:
+        await ctx.send(embed=embed_mau("❌","Cần đạt **Kim Đan** mới lập tông môn!",0xFF4444)); return
+    if nv['linh_thach'] < 1000:
+        await ctx.send(embed=embed_mau("❌","Cần **1,000** 💎!",0xFF4444)); return
+    async with db_pool.acquire() as c:
+        ex = await c.fetchrow("SELECT ten FROM tong_mon WHERE ten=$1", ten_mon)
+        if ex:
+            await ctx.send(embed=embed_mau("❌","Tông môn này đã tồn tại!",0xFF4444)); return
+        await c.execute("INSERT INTO tong_mon(ten,chu_mon,thanh_vien,cap_do,exp_mon) VALUES($1,$2,$3,1,0)",
+                        ten_mon, ctx.author.id, str(ctx.author.id))
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-1000, tong_mon=ten_mon)
+    await ctx.send(embed=embed_mau("🏯 Lập Tông Môn!", f"**{ten_mon}** — Tiểu Phái (Cấp 1)\n👑 Chưởng Môn: **{nv['ten']}**\nDùng `!nangcapmon` khi đủ điều kiện!", 0xFFD700))
+
+@bot.command(name="nangcapmon", aliases=["ncm"])
+async def nang_cap_mon(ctx):
+    """!nangcapmon — Nâng cấp tông môn"""
+    nv = await get_nv(ctx.author.id)
+    if not nv or not nv['tong_mon']:
+        await ctx.send(embed=embed_mau("❌","Bạn chưa có tông môn!",0xFF4444)); return
+    async with db_pool.acquire() as c:
+        mon = await c.fetchrow("SELECT * FROM tong_mon WHERE ten=$1", nv['tong_mon'])
+    if not mon or mon['chu_mon'] != ctx.author.id:
+        await ctx.send(embed=embed_mau("❌","Chỉ chưởng môn mới nâng cấp được!",0xFF4444)); return
+
+    cap_hien = mon['cap_do']
+    if cap_hien >= 6:
+        await ctx.send(embed=embed_mau("🏯","Tông môn đã đạt cấp tối đa (Thánh Địa)!",0xFFD700)); return
+
+    cap_moi_info = TONG_MON_CAP.get(cap_hien + 1, {})
+    exp_can_nc = cap_moi_info.get("exp_can", 0)
+    phi_nc = exp_can_nc // 10  # phí linh thạch = 1/10 EXP cần
+
+    tv_mon = [r for r in mon['thanh_vien'].split(',') if r] if mon['thanh_vien'] else []
+
+    if len(tv_mon) < TONG_MON_CAP[cap_hien]["max_tv"] // 2:
+        await ctx.send(embed=embed_mau("❌",f"Cần ít nhất **{TONG_MON_CAP[cap_hien]['max_tv']//2}** thành viên!",0xFF4444)); return
+    if nv['linh_thach'] < phi_nc:
+        await ctx.send(embed=embed_mau("❌",f"Cần **{phi_nc:,}** 💎 để nâng cấp!",0xFF4444)); return
+
+    async with db_pool.acquire() as c:
+        await c.execute("UPDATE tong_mon SET cap_do=cap_do+1 WHERE ten=$1", nv['tong_mon'])
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-phi_nc)
+    await ctx.send(embed=embed_mau("🏯 Nâng Cấp Tông Môn!", f"**{nv['tong_mon']}** → **{cap_moi_info['ten']}** (Cấp {cap_hien+1})\n✨ Thành viên EXP Bonus: +{cap_moi_info['bonus_exp']}%", 0xFFD700))
+
+@bot.command(name="thamgia")
+async def tham_gia(ctx, *, ten_mon: str):
+    """!thamgia <tên> — Gia nhập tông môn"""
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if nv['tong_mon']:
+        await ctx.send(embed=embed_mau("❌",f"Đã ở tông môn **{nv['tong_mon']}**!",0xFF4444)); return
+    async with db_pool.acquire() as c:
+        mon = await c.fetchrow("SELECT * FROM tong_mon WHERE ten=$1", ten_mon)
+    if not mon:
+        await ctx.send(embed=embed_mau("❌","Tông môn không tồn tại!",0xFF4444)); return
+
+    tv_list = [r for r in mon['thanh_vien'].split(',') if r] if mon['thanh_vien'] else []
+    max_tv = TONG_MON_CAP.get(mon['cap_do'],{}).get("max_tv", 10)
+    if len(tv_list) >= max_tv:
+        await ctx.send(embed=embed_mau("❌",f"Tông môn đã đầy! (Tối đa {max_tv} người)",0xFF4444)); return
+
+    tv_list.append(str(ctx.author.id))
+    async with db_pool.acquire() as c:
+        await c.execute("UPDATE tong_mon SET thanh_vien=$2 WHERE ten=$1", ten_mon, ",".join(tv_list))
+    await cap_nhat(ctx.author.id, tong_mon=ten_mon)
+    cap_info = TONG_MON_CAP.get(mon['cap_do'],{})
+    await ctx.send(embed=embed_mau("🏯 Gia Nhập Thành Công!",
+        f"**{nv['ten']}** đã gia nhập **{ten_mon}** ({cap_info.get('ten','')} Cấp {mon['cap_do']})\n"
+        f"✨ Bonus EXP: +{cap_info.get('bonus_exp',0)}%", 0x55FFAA))
+
+# ══════════════════════════════════════════════════════════════
+#  LỆNH: DÙNG NHANH ĐAN (,an <tên> <số>)
+#  Giới hạn 5 lần/ngày, giảm hiệu quả sau mốc
+# ══════════════════════════════════════════════════════════════
+@bot.command(name="an", aliases=["uong"])
+async def an_dan(ctx, *, args: str = None):
+    """!an <tên đan> [số] — Dùng đan nhanh, giảm hiệu quả sau 5 lần/ngày"""
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if not args:
+        await ctx.send(embed=embed_mau("❌","Dùng: `!an <tên đan> [số lượng]`",0xFF4444)); return
+
+    # Parse tên và số lượng
+    parts = args.rsplit(' ', 1)
+    ten_dan = parts[0].strip()
+    try:
+        so_luong = int(parts[1]) if len(parts) > 1 else 1
+    except ValueError:
+        ten_dan = args.strip()
+        so_luong = 1
+    so_luong = max(1, min(so_luong, 99))
+
+    dan = DAN_DUOC.get(ten_dan)
+    if not dan:
+        await ctx.send(embed=embed_mau("❌",f"Đan dược **{ten_dan}** không tồn tại!\nDùng `!shop` để xem danh sách.",0xFF4444)); return
+
+    # Kiểm tra túi đồ
+    async with db_pool.acquire() as c:
+        item = await c.fetchrow("SELECT so_luong FROM tui_do WHERE user_id=$1 AND vat_pham=$2", ctx.author.id, ten_dan)
+    if not item or item['so_luong'] < 1:
+        await ctx.send(embed=embed_mau("❌",f"Không có **{ten_dan}** trong túi!",0xFF4444)); return
+
+    so_luong = min(so_luong, item['so_luong'])
+
+    # Kiểm tra giới hạn ngày (5 lần/ngày, giảm hiệu quả)
+    async with db_pool.acquire() as c:
+        dan_row = await c.fetchrow("SELECT so_dung FROM dan_ngay WHERE user_id=$1 AND ngay=CURRENT_DATE", ctx.author.id)
+    so_da_dung = dan_row['so_dung'] if dan_row else 0
+
+    # Hệ số giảm hiệu quả theo số lần dùng trong ngày
+    hieu_qua_map = {0:1.0, 1:1.0, 2:1.0, 3:1.0, 4:1.0, 5:0.8, 6:0.5, 7:0.3, 8:0.1}
+    hieu_qua = hieu_qua_map.get(so_da_dung, 0.05)
+
+    vuot_moc_msg = ""
+    if so_da_dung >= 5:
+        vuot_moc_msg = f"\n⚠️ Đã vượt mốc 5 lần/ngày, hiệu quả còn **{int(hieu_qua*100)}%**: 80% → 50% → 30% → 10% → 5%"
+
+    # Tính hiệu ứng
+    updates = {}
+    hieu_ung_lines = []
+    total_dung = min(so_luong, 99)
+
+    for _ in range(total_dung):
+        if dan['loai'] == 'tu_vi':
+            exp_raw = dan.get('exp', 0)
+            exp_thuc = int(exp_raw * hieu_qua)
+            updates['exp'] = updates.get('exp', nv['exp']) + exp_thuc
+            hieu_ung_lines.append(f"✨ Tu Vi: +{exp_thuc:,} (gốc {exp_raw:,})")
+
+        elif dan['loai'] == 'hoi_phuc':
+            hp_raw = dan.get('hp', 0)
+            hp_thuc = int(hp_raw * hieu_qua)
+            new_ll = min(updates.get('linh_luc', nv['linh_luc']) + hp_thuc, nv['linh_luc_max'])
+            updates['linh_luc'] = new_ll
+            hieu_ung_lines.append(f"💧 HP: +{hp_thuc:,}")
+
+        elif dan['loai'] == 'dot_pha':
+            hieu_ung_lines.append(f"🔮 Tăng **{dan.get('ti_le',0)}%** tỉ lệ ĐP (x{hieu_qua:.1f})")
+
+        elif dan['loai'] == 'buff_all':
+            v = int(dan.get('all',0) * hieu_qua)
+            updates['tan_cong'] = updates.get('tan_cong', nv['tan_cong']) + v
+            updates['phong_thu'] = updates.get('phong_thu', nv['phong_thu']) + v
+            hieu_ung_lines.append(f"⭐ Tất cả chỉ số: +{v}")
+
+        elif dan['loai'] == 'buff_atk':
+            v = int(dan.get('atk',0) * hieu_qua)
+            updates['tan_cong'] = updates.get('tan_cong', nv['tan_cong']) + v
+            hieu_ung_lines.append(f"⚔️ Tấn Công: +{v}")
+
+        elif dan['loai'] == 'buff_def':
+            v = int(dan.get('def',0) * hieu_qua)
+            updates['phong_thu'] = updates.get('phong_thu', nv['phong_thu']) + v
+            hieu_ung_lines.append(f"🛡️ Phòng Thủ: +{v}")
+
+        elif dan['loai'] == 'buff_hp':
+            v = int(dan.get('hp_max',0) * hieu_qua)
+            updates['linh_luc_max'] = updates.get('linh_luc_max', nv['linh_luc_max']) + v
+            hieu_ung_lines.append(f"💧 HP Max: +{v:,}")
+
+        so_da_dung += 1
+        hieu_qua = hieu_qua_map.get(so_da_dung, 0.05)
+
+    # Xử lý lên cảnh giới nếu có EXP
+    if 'exp' in updates:
+        new_cg = nv['canh_gioi']
+        new_exp = updates['exp']
+        dp_msg = ""
+        while new_exp >= exp_can(new_cg) and new_cg < len(CANH_GIOI) - 1:
+            new_exp -= exp_can(new_cg); new_cg += 1
+            dp_msg = f"\n🎉 **ĐỘT PHÁ → {CANH_GIOI[new_cg]}**!"
+        updates['exp'] = new_exp
+        updates['canh_gioi'] = new_cg
+        if dp_msg: hieu_ung_lines.append(dp_msg)
+        await cap_nhat_tk(ctx.author.id, tong_exp=updates.get('exp',0) - nv['exp'])
+
+    if updates: await cap_nhat(ctx.author.id, **updates)
+
+    # Trừ túi đồ
+    async with db_pool.acquire() as c:
+        if item['so_luong'] <= total_dung:
+            await c.execute("DELETE FROM tui_do WHERE user_id=$1 AND vat_pham=$2", ctx.author.id, ten_dan)
+        else:
+            await c.execute("UPDATE tui_do SET so_luong=so_luong-$3 WHERE user_id=$1 AND vat_pham=$2", ctx.author.id, ten_dan, total_dung)
+        # Cập nhật đan ngày
+        await c.execute("""
+            INSERT INTO dan_ngay(user_id,ngay,so_dung) VALUES($1,CURRENT_DATE,$2)
+            ON CONFLICT(user_id,ngay) DO UPDATE SET so_dung=dan_ngay.so_dung+$2
+        """, ctx.author.id, total_dung)
+
+    lc_moi = tinh_luc_chien(await get_nv(ctx.author.id))
+
+    await ctx.send(embed=discord.Embed(
+        title=f"🟢 Đã dùng x{total_dung} {ten_dan}",
+        description=(
+            f"**Hiệu ứng:**\n" +
+            "\n".join(hieu_ung_lines[:5]) +
+            f"\n⚡ Chiến Lực: +{lc_moi - tinh_luc_chien(nv):,}" +
+            vuot_moc_msg
+        ),
+        color=0x00AA44
+    ).set_footer(text="⚡ Tu Tiên Bot V4"))
+
+# ══════════════════════════════════════════════════════════════
+#  LỆNH: MUA CẦN CÂU
+# ══════════════════════════════════════════════════════════════
+@bot.command(name="muacancau", aliases=["mcc"])
+async def mua_can_cau(ctx, *, ten_can: str = None):
+    """!muacancau — Xem | !muacancau <tên> — Mua cần câu"""
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if not ten_can:
+        lines = [f"🎣 **{k}** — {v['mo_ta']} | 💎{v.get('phi',0):,}" for k,v in CAN_CAU_DATA.items()]
+        await ctx.send(embed=embed_mau("🎣 Cần Câu","\n".join(lines))); return
+    can = CAN_CAU_DATA.get(ten_can)
+    if not can or 'phi' not in can:
+        await ctx.send(embed=embed_mau("❌","Cần câu không tồn tại hoặc không thể mua!",0xFF4444)); return
+    if nv['linh_thach'] < can['phi']:
+        await ctx.send(embed=embed_mau("❌",f"Cần **{can['phi']:,}** 💎",0xFF4444)); return
+    if nv['canh_gioi'] < can.get('cap_yeu',0):
+        await ctx.send(embed=embed_mau("❌",f"Cần Lv.{can['cap_yeu']}!",0xFF4444)); return
+    await cap_nhat(ctx.author.id, can_cau=ten_can, linh_thach=nv['linh_thach']-can['phi'])
+    await ctx.send(embed=embed_mau("🎣 Đã Mua Cần Câu!", f"**{ten_can}** — {can['mo_ta']}", 0x55FFAA))
+
 @bot.command(name="bxh", aliases=["rank"])
 async def bang_xep_hang(ctx):
     async with db_pool.acquire() as c:
