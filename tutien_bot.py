@@ -1127,7 +1127,7 @@ async def tu_luyen(ctx):
             con_lai = int((end - datetime.now(nv['last_bequan'].tzinfo)).total_seconds()) // 60
             await ctx.send(embed=embed_mau("🧘 Đang Bế Quan",f"Còn **{con_lai}** phút nữa!\n`!xuatquan` để xuất quan.",0xFFAA00)); return
 
-    cd = cooldown_con(nv['last_tulyen'], 60)
+    cd = cooldown_con(nv['last_tulyen'], 5)
     if cd > 0:
         await ctx.send(embed=embed_mau("⏳",f"Còn **{cd:.0f}s** nữa!",0xFFAA00)); return
 
