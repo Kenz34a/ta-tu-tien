@@ -1127,7 +1127,7 @@ async def tu_luyen(ctx):
             con_lai = int((end - datetime.now(nv['last_bequan'].tzinfo)).total_seconds()) // 60
             await ctx.send(embed=embed_mau("🧘 Đang Bế Quan",f"Còn **{con_lai}** phút nữa!\n`!xuatquan` để xuất quan.",0xFFAA00)); return
 
-    cd = cooldown_con(nv['last_tulyen'], 5)
+    cd = cooldown_con(nv['last_tulyen'], 15)
     if cd > 0:
         await ctx.send(embed=embed_mau("⏳",f"Còn **{cd:.0f}s** nữa!",0xFFAA00)); return
 
@@ -1876,7 +1876,7 @@ async def thap_thu_luyen(ctx):
             await c.execute("INSERT INTO thap_thu_luyen(user_id) VALUES($1) ON CONFLICT DO NOTHING", ctx.author.id)
             thap = await c.fetchrow("SELECT * FROM thap_thu_luyen WHERE user_id=$1", ctx.author.id)
 
-    cd = cooldown_con(thap['last_thap'], 120)
+    cd = cooldown_con(thap['last_thap'], 60)
     if cd > 0:
         await ctx.send(embed=embed_mau("⏳",f"Còn **{cd:.0f}s** nữa!",0xFFAA00)); return
 
@@ -2121,7 +2121,7 @@ async def kham_pha(ctx):
     nv = await get_nv(ctx.author.id)
     if not nv:
         await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
-    cd = cooldown_con(nv['last_khampha'],120)
+    cd = cooldown_con(nv['last_khampha'],30)
     if cd>0:
         await ctx.send(embed=embed_mau("⏳",f"Còn **{cd:.0f}s**!",0xFFAA00)); return
 
@@ -2417,7 +2417,7 @@ async def cau_ca(ctx, so_luong: int = 1):
     async with db_pool.acquire() as c:
         last_cau = await c.fetchval("SELECT MAX(created_at) FROM lich_su_cau WHERE user_id=$1", ctx.author.id)
     if last_cau:
-        cd = cooldown_con(last_cau, 30)
+        cd = cooldown_con(last_cau, 20)
         if cd > 0:
             await ctx.send(embed=embed_mau("⏳",f"Còn **{cd:.0f}s** nữa mới câu được!",0xFFAA00)); return
 
