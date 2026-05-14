@@ -728,7 +728,7 @@ def exp_can(cg):
 
 def embed_mau(title, desc, color=0xAA55FF):
     e = discord.Embed(title=title, description=desc, color=color)
-    e.set_footer(text="⚡ Tu Tiên Bot V3 | Vạn Cổ Trường Tồn")
+    e.set_footer(text="⚡ Ta Tu Tiên | Vạn Cổ Trường Tồn")
     return e
 
 async def paginate(ctx, pages, color=0xAA55FF):
@@ -747,7 +747,7 @@ async def paginate(ctx, pages, color=0xAA55FF):
     def make_embed(p):
         title, desc = pages[p]
         e = discord.Embed(title=title, description=desc, color=color)
-        e.set_footer(text=f"⚡ Tu Tiên Bot V3 | Trang {p+1}/{total} — Dùng ◀ ▶ để chuyển")
+        e.set_footer(text=f"⚡ Ta Tu Tiên | Trang {p+1}/{total} — Dùng ◀ ▶ để chuyển")
         return e
 
     msg = await ctx.send(embed=make_embed(0))
@@ -1270,7 +1270,7 @@ async def tu_luyen(ctx):
 💧 Mana: {new_mana}/{nv.get('mana_max',100)} | 🕰️ Thọ Nguyên: +{tho_gain} năm
 {dp_msg}{tv_tru_msg}{phi_msg}{kl_msg}
         """, color=color
-    ).set_footer(text="⚡ Tu Tiên Bot V4 | Vạn Cổ Trường Tồn"))
+    ).set_footer(text="⚡ Ta Tu Tiên | Vạn Cổ Trường Tồn"))
 
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: BẾ QUAN
@@ -1589,7 +1589,7 @@ async def gui_phan_thuong_boss(gioi: str, boss_info: dict, session_time):
         color=0xFF0000
     )
     result_embed.set_image(url=boss_info.get("img",""))
-    result_embed.set_footer(text="⚡ Tu Tiên Bot V3 | Boss Thế Giới")
+    result_embed.set_footer(text="⚡ Ta Tu Tiên | Boss Thế Giới")
 
     # Gửi vào channel boss
     channel = bot.get_channel(BOSS_CHANNEL_ID)
@@ -1701,7 +1701,7 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
             color=0xFF0000
         )
         e.set_image(url=boss_info.get("img",""))
-        e.set_footer(text="⚡ Tu Tiên Bot V3 | Boss Thế Giới")
+        e.set_footer(text="⚡ Ta Tu Tiên | Boss Thế Giới")
         await ctx.send(embed=e)
         return
 
@@ -1757,7 +1757,7 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
         if killed:
             msg += f"\n💀 **BOSS THẾ GIỚI ĐÃ BỊ TIÊU DIỆT!**\n🏆 Phần thưởng đã gửi về DM!\n⏰ Boss tiếp theo xuất hiện sau **1 giờ**!"
         e2 = discord.Embed(title=f"⚔️ Tham Chiến Boss Thế Giới", description=msg, color=color)
-        e2.set_footer(text="⚡ Tu Tiên Bot V3 | Vạn Cổ Trường Tồn")
+        e2.set_footer(text="⚡ Ta Tu Tiên | Vạn Cổ Trường Tồn")
         await ctx.send(embed=e2)
 
 # ══════════════════════════════════════════════════════════════
@@ -1821,7 +1821,7 @@ async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
             color=0xFF0000
         )
         e.set_image(url=boss_info.get("img", ""))
-        e.set_footer(text=f"⚡ Tu Tiên Bot V3 | Boss xuất hiện lúc {datetime.utcnow().strftime('%H:%M UTC')}")
+        e.set_footer(text=f"⚡ Ta Tu Tiên | Boss xuất hiện lúc {datetime.utcnow().strftime('%H:%M UTC')}")
         await channel.send(
             f"@everyone 🔔 **Boss Thế Giới xuất hiện tại {bd_info['ten']}!**",
             embed=e
@@ -2464,7 +2464,7 @@ async def cau_ca(ctx, so_luong: int = 1):
         title=f"🎣 Câu Cá — {nv['ten']}",
         description="\n".join(ket_qua) + f"\n\n**Tổng:** +{tong_tv:,} Tu Vi | +{tong_lt:,} 💎\n💙 Mana: {new_mana}/{nv.get('mana_max',100)}",
         color=0x55AAFF
-    ).set_footer(text="⚡ Tu Tiên Bot V4"))
+    ).set_footer(text="⚡ Ta Tu Tiên"))
 
 @bot.command(name="lichsucau", aliases=["lsc"])
 async def lich_su_cau_cmd(ctx):
@@ -2727,7 +2727,7 @@ async def an_dan(ctx, *, args: str = None):
             vuot_moc_msg
         ),
         color=0x00AA44
-    ).set_footer(text="⚡ Tu Tiên Bot V4"))
+    ).set_footer(text="⚡ Ta Tu Tiên"))
 
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: MUA CẦN CÂU
