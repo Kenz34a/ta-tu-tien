@@ -738,7 +738,7 @@ async def paginate(ctx, pages, color=0xAA55FF):
     if not pages:
         return
     if len(pages) == 1:
-        await ctx.send(embed=discord.Embed(title=pages[0][0], description=pages[0][1], color=color).set_footer(text="⚡ Tu Tiên Bot V3 | Vạn Cổ Trường Tồn"))
+        await ctx.send(embed=discord.Embed(title=pages[0][0], description=pages[0][1], color=color).set_footer(text="⚡ Tu Tiên | Vạn Cổ Trường Tồn"))
         return
 
     page = 0
