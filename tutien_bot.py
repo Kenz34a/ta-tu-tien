@@ -568,36 +568,18 @@ async def init_db():
         await c.execute("""
             CREATE TABLE IF NOT EXISTS thong_ke (
                 user_id        BIGINT PRIMARY KEY REFERENCES nhanvat(user_id) ON DELETE CASCADE,
-                tong_tuluyen    BIGINT DEFAULT 0, tong_exp  BIGINT DEFAULT 0,
+                tong_tulyen    BIGINT DEFAULT 0, tong_exp  BIGINT DEFAULT 0,
                 tong_boss_giet BIGINT DEFAULT 0, tong_pvp_thang INT DEFAULT 0,
                 tong_pvp_thua  INT DEFAULT 0,    tong_lt_kiem BIGINT DEFAULT 0,
                 tong_lt_tieu   BIGINT DEFAULT 0, dot_pha_count INT DEFAULT 0,
                 updated_at     TIMESTAMPTZ DEFAULT NOW()
             )
         """)
-        # Migration: rename cột tong_tulyen → tong_tuluyen nếu DB cũ bị sai tên
+        # Migration: đảm bảo cột tong_tulyen tồn tại
         try:
-            await c.execute("""
-                DO $$
-                BEGIN
-                    IF EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='thong_ke' AND column_name='tong_tulyen'
-                    ) AND NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns
-                        WHERE table_name='thong_ke' AND column_name='tong_tuluyen'
-                    ) THEN
-                        ALTER TABLE thong_ke RENAME COLUMN tong_tulyen TO tong_tuluyen;
-                    END IF;
-                END$$;
-            """)
+            await c.execute("ALTER TABLE thong_ke ADD COLUMN IF NOT EXISTS tong_tulyen BIGINT DEFAULT 0")
         except Exception as e:
-            print(f"⚠️ Migration tong_tulyen skip: {e}")
-        # Thêm cột nếu vẫn còn thiếu (trường hợp bảng tạo thiếu hoàn toàn)
-        try:
-            await c.execute("ALTER TABLE thong_ke ADD COLUMN IF NOT EXISTS tong_tuluyen BIGINT DEFAULT 0")
-        except Exception as e:
-            print(f"⚠️ Migration add tong_tuluyen skip: {e}")
+            print(f"⚠️ Migration add tong_tulyen skip: {e}")
         await c.execute("""
             CREATE TABLE IF NOT EXISTS nhat_ky (
                 id BIGSERIAL PRIMARY KEY, user_id BIGINT REFERENCES nhanvat(user_id) ON DELETE CASCADE,
@@ -813,11 +795,11 @@ async def kiem_tra_thanh_tich(ctx, uid, nv, tk):
     moi = []
     dk = {
         "tan_dao": True,
-        "tuluyen_10":    tk and tk['tong_tuluyen']>=10,
-        "tuluyen_100":   tk and tk['tong_tuluyen']>=100,
-        "tuluyen_500":   tk and tk['tong_tuluyen']>=500,
-        "tuluyen_1000":  tk and tk['tong_tuluyen']>=1000,
-        "tuluyen_5000":  tk and tk['tong_tuluyen']>=5000,
+        "tuluyen_10":    tk and tk['tong_tulyen']>=10,
+        "tuluyen_100":   tk and tk['tong_tulyen']>=100,
+        "tuluyen_500":   tk and tk['tong_tulyen']>=500,
+        "tuluyen_1000":  tk and tk['tong_tulyen']>=1000,
+        "tuluyen_5000":  tk and tk['tong_tulyen']>=5000,
         "boss_1":       tk and tk['tong_boss_giet']>=1,
         "boss_50":      tk and tk['tong_boss_giet']>=50,
         "boss_100":     tk and tk['tong_boss_giet']>=100,
@@ -1139,7 +1121,7 @@ async def thong_tin(ctx, member: discord.Member = None):
     if dac_biet_lines:
         e.add_field(name="✨ Đặc Biệt", value="\n".join(dac_biet_lines), inline=False)
 
-    e.set_footer(text=f"Tạo nhân vật: {ngay_tao} | Hoạt động cuối: {datetime.utcnow().strftime('%d/%m/%Y %H:%M')}")
+    e.set_footer(text=f"Tạo nhân vật: {ngay_tao} | Hoạt động cuối: {datetime.now(datetime.UTC).strftime('%d/%m/%Y %H:%M')}")
     if target.avatar:
         e.set_thumbnail(url=target.avatar.url)
     await ctx.send(embed=e)
@@ -1259,9 +1241,9 @@ async def tu_luyen(ctx):
         linh_luc=min(nv['linh_luc'] + ll_hoi, nv['linh_luc_max']),
         mana=new_mana, tho_nguyen=new_tho,
         kiem_linh_cap=new_kl_cap, kiem_linh_exp=new_kl_exp,
-        ban_do=ban_do_hien, last_tuluyen=datetime.utcnow()
+        ban_do=ban_do_hien, last_tuluyen=datetime.now(datetime.UTC)
     )
-    await cap_nhat_tk(ctx.author.id, tong_tuluyen=1, tong_exp=exp_gain, dot_pha_count=dp_cnt)
+    await cap_nhat_tk(ctx.author.id, tong_tulyen=1, tong_exp=exp_gain, dot_pha_count=dp_cnt)
     await them_nhat_ky(ctx.author.id, "tuluyen", f"+{exp_gain:,} EXP, +{tv_gain:,} Tu Vi → {CANH_GIOI[new_cg]}")
 
     nv2 = await get_nv(ctx.author.id)
@@ -1330,7 +1312,7 @@ async def be_quan(ctx, gio: int = None):
         await ctx.send(embed=embed_mau("🧘 Bế Quan",
             "Dùng: `!bequan <giờ>` (1-72 giờ)\nNhận EXP gấp **3x** khi xuất quan!\n⚠️ Không thể tu luyện khi bế quan.")); return
     gio = max(1, min(72, gio))
-    await cap_nhat(ctx.author.id, last_bequan=datetime.utcnow(), bequan_gio=gio)
+    await cap_nhat(ctx.author.id, last_bequan=datetime.now(datetime.UTC), bequan_gio=gio)
     await them_nhat_ky(ctx.author.id,"bequan",f"Bế quan {gio} giờ")
     await ctx.send(embed=embed_mau("🧘 Bắt Đầu Bế Quan!",f"""
 Bế quan **{gio} giờ** bắt đầu!
@@ -1367,7 +1349,7 @@ async def _xuat_quan(ctx, nv):
 
     await cap_nhat(ctx.author.id, exp=new_exp, tu_vi=nv['tu_vi']+tv_gain,
                    canh_gioi=new_cg, bequan_gio=0)
-    await cap_nhat_tk(ctx.author.id, tong_tuluyen=gio_thuc*6, tong_exp=exp_gain)
+    await cap_nhat_tk(ctx.author.id, tong_tulyen=gio_thuc*6, tong_exp=exp_gain)
     await them_nhat_ky(ctx.author.id,"xuatquan",f"Xuất quan sau {gio_thuc}h, +{exp_gain} EXP")
 
     await ctx.send(embed=embed_mau("🌅 Xuất Quan Thành Công!", f"""
@@ -1544,7 +1526,7 @@ async def danh_boss(ctx, so_boss: int = None):
         color = 0x55FF55
     else:
         await cap_nhat(ctx.author.id, linh_luc=1, so_chet=nv['so_chet']+1)
-        await cap_nhat_tk(ctx.author.id, tong_tuluyen=0)
+        await cap_nhat_tk(ctx.author.id, tong_tulyen=0)
         await them_nhat_ky(ctx.author.id,"boss",f"Bại trận trước **{boss['ten']}**")
         result = "\n".join(rounds)+"\n...\n\n💀 **THẤT BẠI!** Hồi phục rồi thử lại!"
         color = 0xFF4444
@@ -1707,10 +1689,10 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
     if not hanh_dong:
         # Hiển thị trạng thái boss
         if trang_thai == 'chet':
-            next_spawn = boss_row['last_reset'] + timedelta(hours=2) if boss_row and boss_row['last_reset'] else datetime.utcnow()
-            now_utc = datetime.utcnow()
+            next_spawn = boss_row['last_reset'] + timedelta(hours=2) if boss_row and boss_row['last_reset'] else datetime.now(datetime.UTC)
+            now_utc = datetime.now(datetime.UTC)
             if hasattr(next_spawn, 'tzinfo') and next_spawn.tzinfo:
-                import pytz; now_utc = datetime.now(next_spawn.tzinfo)
+                now_utc = datetime.now(next_spawn.tzinfo if next_spawn.tzinfo else datetime.UTC)
             con_lai = max(0, int((next_spawn - now_utc).total_seconds()))
             h, m, s = con_lai//3600, (con_lai%3600)//60, con_lai%60
             await ctx.send(embed=embed_mau(
@@ -1859,9 +1841,8 @@ async def auto_boss_spawn():
             last_reset  = boss_row['last_reset']
 
             # Tính thời gian UTC hiện tại
-            now_utc = datetime.utcnow()
-            if last_reset and hasattr(last_reset, 'tzinfo') and last_reset.tzinfo:
-                import pytz
+            now_utc = datetime.now(datetime.UTC)
+            if last_reset and last_reset.tzinfo:
                 now_utc = datetime.now(last_reset.tzinfo)
 
             # Nếu boss đang sống, kiểm tra đã qua 2 tiếng chưa → đóng boss
@@ -1935,7 +1916,7 @@ async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
             color=0xFF0000
         )
         e.set_image(url=boss_info.get("img", ""))
-        e.set_footer(text=f"⚡ Ta Tu Tiên | Boss xuất hiện lúc {datetime.utcnow().strftime('%H:%M UTC')}")
+        e.set_footer(text=f"⚡ Ta Tu Tiên | Boss xuất hiện lúc {datetime.now(datetime.UTC).strftime('%H:%M UTC')}")
         await channel.send(
             f"@everyone 🔔 **Boss Thế Giới xuất hiện tại {bd_info['ten']}!**",
             embed=e
@@ -2091,7 +2072,7 @@ async def trong_cay(ctx, hanh_dong: str = None, *, loai_cay: str = None):
         if dang_trong >= 5:
             await ctx.send(embed=embed_mau("❌","Vườn đầy rồi! Tối đa 5 ô. Thu hoạch trước!",0xFF4444)); return
 
-        thu_hoach_luc = datetime.utcnow() + timedelta(seconds=cay['thoi_gian'])
+        thu_hoach_luc = datetime.now(datetime.UTC) + timedelta(seconds=cay['thoi_gian'])
         await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-cay['gia_hat'])
         async with db_pool.acquire() as c:
             await c.execute("INSERT INTO vuon_cay(user_id,loai_cay,trong_luc,thu_hoach_luc) VALUES($1,$2,NOW(),$3)",
@@ -2130,7 +2111,7 @@ async def trong_cay(ctx, hanh_dong: str = None, *, loai_cay: str = None):
             await ctx.send(embed=embed_mau("🌿","Vườn trống!")); return
         lines=[]
         for r in cay_dang:
-            status = "✅ Chín!" if r['da_thu']==False and r['thu_hoach_luc'] and r['thu_hoach_luc'].replace(tzinfo=None)<=datetime.utcnow() else ("🌱 Đang lớn" if not r['da_thu'] else "🍃 Đã thu")
+            status = "✅ Chín!" if r['da_thu']==False and r['thu_hoach_luc'] and r['thu_hoach_luc'].replace(tzinfo=None)<=datetime.now(datetime.UTC) else ("🌱 Đang lớn" if not r['da_thu'] else "🍃 Đã thu")
             lines.append(f"{status} **{r['loai_cay']}**")
         await ctx.send(embed=embed_mau("🌿 Vườn Của Bạn","\n".join(lines)))
 
@@ -2231,7 +2212,7 @@ async def kham_pha(ctx):
             async with db_pool.acquire() as c:
                 await c.execute("INSERT INTO tui_do(user_id,vat_pham,so_luong) VALUES($1,$2,1) ON CONFLICT(user_id,vat_pham) DO UPDATE SET so_luong=tui_do.so_luong+1",ctx.author.id,vp_found)
 
-    await cap_nhat(ctx.author.id,linh_thach=nv['linh_thach']+lt,last_khampha=datetime.utcnow())
+    await cap_nhat(ctx.author.id,linh_thach=nv['linh_thach']+lt,last_khampha=datetime.now(datetime.UTC))
     await cap_nhat_tk(ctx.author.id,tong_lt_kiem=lt)
     await them_nhat_ky(ctx.author.id,"khampha",f"+{lt}💎"+(f", tìm {vp_found}" if vp_found else ""))
     await ctx.send(embed=embed_mau("🗺️ Khám Phá","\n".join(results),0x55AAFF))
@@ -2863,7 +2844,7 @@ async def thong_ke(ctx, member: discord.Member = None):
     async with db_pool.acquire() as c:
         thap = await c.fetchrow("SELECT tang_hien FROM thap_thu_luyen WHERE user_id=$1",target.id)
     await ctx.send(embed=embed_mau(f"📊 Thống Kê — {nv['ten']}",f"""
-🧘 Tu Luyện: {tk['tong_tuluyen']:,} lần | 🔥 Đột Phá: {tk['dot_pha_count']} lần
+🧘 Tu Luyện: {tk['tong_tulyen']:,} lần | 🔥 Đột Phá: {tk['dot_pha_count']} lần
 ✨ Tổng EXP: {tk['tong_exp']:,}
 👹 Boss đã giết: {tk['tong_boss_giet']:,}
 ⚔️ PvP: {tk['tong_pvp_thang']}T/{tk['tong_pvp_thua']}B ({wr})
