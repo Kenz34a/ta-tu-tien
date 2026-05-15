@@ -544,6 +544,7 @@ async def init_db():
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS so_chet       INT DEFAULT 0",
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS da_chon_toc  BOOLEAN DEFAULT FALSE",
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS tong_mon      TEXT DEFAULT ''",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS last_tuluyen  TIMESTAMPTZ",
         ]
         for sql in migrations:
             try:
@@ -640,6 +641,15 @@ async def init_db():
             )
         """)
         await c.execute("CREATE INDEX IF NOT EXISTS idx_bdl ON boss_damage_log(gioi, boss_session, damage DESC)")
+        # Bảng đăng ký tham gia boss thế giới
+        await c.execute("""
+            CREATE TABLE IF NOT EXISTS boss_dangky (
+                gioi        TEXT,
+                user_id     BIGINT,
+                dangky_luc  TIMESTAMPTZ DEFAULT NOW(),
+                PRIMARY KEY (gioi, user_id)
+            )
+        """)
         # Khởi tạo boss thế giới nếu chưa có
         for gioi in BOSS_THE_GIOI_LIST.keys():
             b = BOSS_THE_GIOI_LIST[gioi][0]
@@ -1674,7 +1684,7 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
     if not hanh_dong:
         # Hiển thị trạng thái boss
         if trang_thai == 'chet':
-            next_spawn = boss_row['last_reset'] + timedelta(hours=1) if boss_row and boss_row['last_reset'] else datetime.utcnow()
+            next_spawn = boss_row['last_reset'] + timedelta(hours=2) if boss_row and boss_row['last_reset'] else datetime.utcnow()
             now_utc = datetime.utcnow()
             if hasattr(next_spawn, 'tzinfo') and next_spawn.tzinfo:
                 import pytz; now_utc = datetime.now(next_spawn.tzinfo)
@@ -1688,14 +1698,22 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
                 0x888888
             )); return
 
+        # Đếm người đã đăng ký
+        async with db_pool.acquire() as c:
+            so_dangky = await c.fetchval("SELECT COUNT(*) FROM boss_dangky WHERE gioi=$1", gioi)
+            da_dangky = await c.fetchval("SELECT 1 FROM boss_dangky WHERE gioi=$1 AND user_id=$2", gioi, ctx.author.id)
+
         pct_bar = format_dmg_bar(hp_hien, boss_info["hp"])
+        dangky_str = f"✅ Đã đăng ký" if da_dangky else f"📋 Chưa đăng ký — dùng `!bossthegioi dangky`"
         e = discord.Embed(
             title=f"👑 Boss Thế Giới — {BAN_DO[gioi]['ten']}",
             description=(
                 f"**{boss_info['ten']}**\n\n"
                 f"❤️ HP: **{hp_hien:,}** / **{boss_info['hp']:,}**\n"
                 f"{pct_bar}\n\n"
-                f"⚔️ Cần Lv.**{boss_info['cap_yeu']}** | 💎 {boss_info['phan_thuong']:,} | ✨ {boss_info['exp']:,} EXP\n\n"
+                f"⚔️ Cần Lv.**{boss_info['cap_yeu']}** | 💎 {boss_info['phan_thuong']:,} | ✨ {boss_info['exp']:,} EXP\n"
+                f"👥 Người đã đăng ký: **{so_dangky}**\n"
+                f"Bạn: {dangky_str}\n\n"
                 f"Dùng `!bossthegioi tan` để tham chiến!"
             ),
             color=0xFF0000
@@ -1705,13 +1723,37 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
         await ctx.send(embed=e)
         return
 
+    if hanh_dong == "dangky":
+        if trang_thai == 'chet':
+            await ctx.send(embed=embed_mau("💀","Boss chưa xuất hiện! Không thể đăng ký.",0x888888)); return
+        if nv['canh_gioi'] < boss_info["cap_yeu"]:
+            await ctx.send(embed=embed_mau("❌",f"Cần Lv.**{boss_info['cap_yeu']}** ({CANH_GIOI[boss_info['cap_yeu']]}) mới được đăng ký!",0xFF4444)); return
+        async with db_pool.acquire() as c:
+            da_dangky = await c.fetchval("SELECT 1 FROM boss_dangky WHERE gioi=$1 AND user_id=$2", gioi, ctx.author.id)
+            if da_dangky:
+                await ctx.send(embed=embed_mau("✅ Đã Đăng Ký",f"Bạn đã đăng ký tham chiến **{boss_info['ten']}** rồi!\nDùng `!bossthegioi tan` để đánh!",0x55FFAA)); return
+            await c.execute("INSERT INTO boss_dangky(gioi, user_id) VALUES($1,$2) ON CONFLICT DO NOTHING", gioi, ctx.author.id)
+            so_dangky = await c.fetchval("SELECT COUNT(*) FROM boss_dangky WHERE gioi=$1", gioi)
+        await ctx.send(embed=embed_mau("📋 Đăng Ký Thành Công!",
+            f"**{nv['ten']}** đã đăng ký tham chiến **{boss_info['ten']}**!\n"
+            f"👥 Tổng người đăng ký: **{so_dangky}**\n\n"
+            f"⚔️ Dùng `!bossthegioi tan` để bắt đầu đánh!",0x55FFAA)); return
+
     if hanh_dong == "tan":
         if trang_thai == 'chet':
             await ctx.send(embed=embed_mau("💀","Boss chưa xuất hiện! Chờ thông báo hồi sinh.",0x888888)); return
         if nv['canh_gioi'] < boss_info["cap_yeu"]:
             await ctx.send(embed=embed_mau("❌",f"Cần Lv.**{boss_info['cap_yeu']}** ({CANH_GIOI[boss_info['cap_yeu']]})!",0xFF4444)); return
         if hp_hien <= 0:
-            await ctx.send(embed=embed_mau("💀","Boss đã bị hạ! Hồi sinh sau 1 giờ.",0x888888)); return
+            await ctx.send(embed=embed_mau("💀","Boss đã bị hạ! Hồi sinh sau 2 giờ.",0x888888)); return
+
+        # Kiểm tra đã đăng ký chưa
+        async with db_pool.acquire() as c:
+            da_dangky = await c.fetchval("SELECT 1 FROM boss_dangky WHERE gioi=$1 AND user_id=$2", gioi, ctx.author.id)
+        if not da_dangky:
+            await ctx.send(embed=embed_mau("❌ Chưa Đăng Ký!",
+                f"Bạn cần đăng ký trước khi tham chiến!\n"
+                f"Dùng `!bossthegioi dangky` để đăng ký!",0xFF4444)); return
 
         cp_list = json.loads(nv['cong_phap'] or '[]')
         atk_bonus = sum(CONG_PHAP_TAN_CONG.get(cp,{}).get('sat_thuong',0) for cp in cp_list)
@@ -1755,7 +1797,7 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
             f"{pct_bar2}\n"
         )
         if killed:
-            msg += f"\n💀 **BOSS THẾ GIỚI ĐÃ BỊ TIÊU DIỆT!**\n🏆 Phần thưởng đã gửi về DM!\n⏰ Boss tiếp theo xuất hiện sau **1 giờ**!"
+            msg += f"\n💀 **BOSS THẾ GIỚI ĐÃ BỊ TIÊU DIỆT!**\n🏆 Phần thưởng đã gửi về DM!\n⏰ Boss tiếp theo xuất hiện sau **2 giờ**!"
         e2 = discord.Embed(title=f"⚔️ Tham Chiến Boss Thế Giới", description=msg, color=color)
         e2.set_footer(text="⚡ Ta Tu Tiên | Vạn Cổ Trường Tồn")
         await ctx.send(embed=e2)
@@ -1773,21 +1815,67 @@ async def set_channel(ctx, loai: str = "boss"):
 # ══════════════════════════════════════════════════════════════
 #  TASK: TỰ ĐỘNG THÔNG BÁO BOSS XUẤT HIỆN (mỗi 2 giờ thực)
 # ══════════════════════════════════════════════════════════════
-@tasks.loop(hours=2)
+@tasks.loop(minutes=5)
 async def auto_boss_spawn():
-    """Mỗi 2 giờ: spawn boss ở TẤT CẢ các giới cùng lúc, không block nhau"""
+    """Mỗi 5 phút check — spawn boss nếu đã đủ 2 tiếng kể từ lần reset cuối"""
     if db_pool is None: return
     channel = bot.get_channel(BOSS_CHANNEL_ID)
     if not channel: return
 
-    # Spawn tất cả các giới song song
-    tasks_list = [_spawn_boss_gioi(gioi, bd_info, channel)
-                  for gioi, bd_info in BAN_DO.items()
-                  if gioi in BOSS_THE_GIOI_LIST]
-    await asyncio.gather(*tasks_list, return_exceptions=True)
+    for gioi, bd_info in BAN_DO.items():
+        if gioi not in BOSS_THE_GIOI_LIST:
+            continue
+        try:
+            async with db_pool.acquire() as c:
+                boss_row = await c.fetchrow("SELECT * FROM boss_the_gioi WHERE gioi=$1", gioi)
+
+            if not boss_row:
+                continue
+
+            trang_thai = boss_row['trang_thai']
+            last_reset  = boss_row['last_reset']
+
+            # Tính thời gian UTC hiện tại
+            now_utc = datetime.utcnow()
+            if last_reset and hasattr(last_reset, 'tzinfo') and last_reset.tzinfo:
+                import pytz
+                now_utc = datetime.now(last_reset.tzinfo)
+
+            # Nếu boss đang sống, kiểm tra đã qua 2 tiếng chưa → đóng boss
+            if trang_thai == 'song' and last_reset:
+                elapsed = (now_utc - last_reset).total_seconds()
+                if elapsed >= 7200:
+                    boss_idx  = boss_row['boss_idx'] if boss_row else 0
+                    boss_info = get_boss_hien_tai(gioi, boss_idx)
+                    next_idx  = (boss_idx + 1) % len(BOSS_THE_GIOI_LIST[gioi])
+                    next_boss = get_boss_hien_tai(gioi, next_idx)
+                    async with db_pool.acquire() as c:
+                        await c.execute("""
+                            UPDATE boss_the_gioi SET trang_thai='chet', hp_hien=$2,
+                            boss_idx=$3, last_reset=NOW() WHERE gioi=$1
+                        """, gioi, next_boss["hp"], next_idx)
+                    # Phát thưởng
+                    if boss_row['xuat_hien_luc']:
+                        await gui_phan_thuong_boss(gioi, boss_info, boss_row['xuat_hien_luc'])
+                    await channel.send(embed=embed_mau(
+                        f"⏰ Boss Rút Lui — {bd_info['ten']}",
+                        f"**{boss_info['ten']}** đã rút lui sau 2 giờ!\n"
+                        f"Phần thưởng đã gửi về DM các tu sĩ đã tham chiến!\n"
+                        f"⏰ Boss mới sẽ xuất hiện sau **2 giờ**!",
+                        0x888888
+                    ))
+
+            # Nếu boss chết và đã qua 2 tiếng kể từ last_reset → spawn boss mới
+            elif trang_thai == 'chet' and last_reset:
+                elapsed = (now_utc - last_reset).total_seconds()
+                if elapsed >= 7200:
+                    await _spawn_boss_gioi(gioi, bd_info, channel)
+
+        except Exception as err:
+            print(f"❌ Lỗi check boss [{gioi}]: {err}")
 
 async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
-    """Spawn boss 1 giới: thông báo → đợi 2h → đóng nếu chưa chết"""
+    """Spawn boss 1 giới: cập nhật DB + gửi thông báo"""
     try:
         async with db_pool.acquire() as c:
             boss_row = await c.fetchrow("SELECT * FROM boss_the_gioi WHERE gioi=$1", gioi)
@@ -1801,6 +1889,8 @@ async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
                 UPDATE boss_the_gioi SET hp_hien=$2, trang_thai='song',
                 xuat_hien_luc=NOW(), last_reset=NOW() WHERE gioi=$1
             """, gioi, boss_info["hp"])
+            # Xóa danh sách đăng ký cũ
+            await c.execute("DELETE FROM boss_dangky WHERE gioi=$1", gioi)
 
         # Embed thông báo xuất hiện
         e = discord.Embed(
@@ -1814,7 +1904,8 @@ async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
                 f"🔑 Yêu cầu: Lv.**{boss_info['cap_yeu']}** "
                 f"({CANH_GIOI[min(boss_info['cap_yeu'], len(CANH_GIOI)-1)]})\n\n"
                 f"⏰ **Boss tồn tại 2 giờ!**\n"
-                f"Dùng lệnh `!bossthegioi tan` để tham chiến!\n"
+                f"📋 Dùng `!bossthegioi dangky` để đăng ký tham chiến!\n"
+                f"⚔️ Sau khi đăng ký, dùng `!bossthegioi tan` để đánh!\n"
                 f"Phần thưởng tính theo damage — đánh càng nhiều nhận càng nhiều!\n\n"
                 f"🏆 Top damage nhận bonus đặc biệt!"
             ),
@@ -1826,35 +1917,6 @@ async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
             f"@everyone 🔔 **Boss Thế Giới xuất hiện tại {bd_info['ten']}!**",
             embed=e
         )
-
-        # Đợi 2 giờ (không block task khác vì dùng gather)
-        await asyncio.sleep(7200)
-
-        # Kiểm tra còn sống không
-        async with db_pool.acquire() as c:
-            row = await c.fetchrow("SELECT trang_thai, hp_hien, xuat_hien_luc FROM boss_the_gioi WHERE gioi=$1", gioi)
-
-        if row and row['trang_thai'] == 'song' and row['hp_hien'] > 0:
-            # Boss chưa bị giết — đóng, chuyển sang boss tiếp theo
-            next_idx = (boss_idx + 1) % len(BOSS_THE_GIOI_LIST[gioi])
-            next_boss = get_boss_hien_tai(gioi, next_idx)
-            async with db_pool.acquire() as c:
-                await c.execute("""
-                    UPDATE boss_the_gioi SET trang_thai='chet', hp_hien=$2,
-                    boss_idx=$3, last_reset=NOW() WHERE gioi=$1
-                """, gioi, next_boss["hp"], next_idx)
-
-            # Phát thưởng cho người đã đánh
-            if row['xuat_hien_luc']:
-                await gui_phan_thuong_boss(gioi, boss_info, row['xuat_hien_luc'])
-
-            await channel.send(embed=embed_mau(
-                f"⏰ Boss Rút Lui — {bd_info['ten']}",
-                f"**{boss_info['ten']}** đã rút lui sau 2 giờ!\n"
-                f"Phần thưởng đã gửi về DM các tu sĩ đã tham chiến!\n"
-                f"⏰ Boss mới sẽ xuất hiện sau **2 giờ**!",
-                0x888888
-            ))
     except Exception as err:
         print(f"❌ Lỗi spawn boss [{gioi}]: {err}")
 
@@ -2864,7 +2926,8 @@ HELP_PAGES = [
 `!boss` — Xem boss bản đồ hiện tại
 `!boss <số>` — Đánh boss
 `!bossthegioi` — Xem boss thế giới
-`!bossthegioi tan` — Tấn công boss thế giới
+`!bossthegioi dangky` — Đăng ký tham chiến boss thế giới
+`!bossthegioi tan` — Tấn công boss thế giới *(cần đăng ký trước!)*
 `!pvp @người` — Thách đấu PvP
 `!thap` — Tháp thử luyện *(60s)*
 
