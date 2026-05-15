@@ -575,6 +575,29 @@ async def init_db():
                 updated_at     TIMESTAMPTZ DEFAULT NOW()
             )
         """)
+        # Migration: rename cột tong_tulyen → tong_tuluyen nếu DB cũ bị sai tên
+        try:
+            await c.execute("""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='thong_ke' AND column_name='tong_tulyen'
+                    ) AND NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name='thong_ke' AND column_name='tong_tuluyen'
+                    ) THEN
+                        ALTER TABLE thong_ke RENAME COLUMN tong_tulyen TO tong_tuluyen;
+                    END IF;
+                END$$;
+            """)
+        except Exception as e:
+            print(f"⚠️ Migration tong_tulyen skip: {e}")
+        # Thêm cột nếu vẫn còn thiếu (trường hợp bảng tạo thiếu hoàn toàn)
+        try:
+            await c.execute("ALTER TABLE thong_ke ADD COLUMN IF NOT EXISTS tong_tuluyen BIGINT DEFAULT 0")
+        except Exception as e:
+            print(f"⚠️ Migration add tong_tuluyen skip: {e}")
         await c.execute("""
             CREATE TABLE IF NOT EXISTS nhat_ky (
                 id BIGSERIAL PRIMARY KEY, user_id BIGINT REFERENCES nhanvat(user_id) ON DELETE CASCADE,
