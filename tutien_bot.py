@@ -516,7 +516,7 @@ async def init_db():
                 kiem_linh_exp INT  DEFAULT 0,
                 dao_lu        BIGINT DEFAULT 0,
                 so_chet       INT  DEFAULT 0,
-                last_tulyen   TIMESTAMPTZ,
+                last_tuluyen   TIMESTAMPTZ,
                 last_khampha  TIMESTAMPTZ,
                 last_bequan   TIMESTAMPTZ,
                 bequan_gio    INT  DEFAULT 0,
@@ -1127,7 +1127,7 @@ async def tu_luyen(ctx):
             con_lai = int((end - datetime.now(nv['last_bequan'].tzinfo)).total_seconds()) // 60
             await ctx.send(embed=embed_mau("🧘 Đang Bế Quan",f"Còn **{con_lai}** phút nữa!\n`!xuatquan` để xuất quan.",0xFFAA00)); return
 
-    cd = cooldown_con(nv['last_tulyen'], 15)
+    cd = cooldown_con(nv['last_tuluyen'], 15)
     if cd > 0:
         await ctx.send(embed=embed_mau("⏳",f"Còn **{cd:.0f}s** nữa!",0xFFAA00)); return
 
@@ -1226,7 +1226,7 @@ async def tu_luyen(ctx):
         linh_luc=min(nv['linh_luc'] + ll_hoi, nv['linh_luc_max']),
         mana=new_mana, tho_nguyen=new_tho,
         kiem_linh_cap=new_kl_cap, kiem_linh_exp=new_kl_exp,
-        ban_do=ban_do_hien, last_tulyen=datetime.utcnow()
+        ban_do=ban_do_hien, last_tuluyen=datetime.utcnow()
     )
     await cap_nhat_tk(ctx.author.id, tong_tuluyen=1, tong_exp=exp_gain, dot_pha_count=dp_cnt)
     await them_nhat_ky(ctx.author.id, "tuluyen", f"+{exp_gain:,} EXP, +{tv_gain:,} Tu Vi → {CANH_GIOI[new_cg]}")
