@@ -9,7 +9,7 @@
 import discord
 from discord.ext import commands, tasks
 import asyncpg, random, asyncio, os, json, math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # ══════════════════════════════════════════════════════════════
 #  CẤU HÌNH
@@ -1121,7 +1121,7 @@ async def thong_tin(ctx, member: discord.Member = None):
     if dac_biet_lines:
         e.add_field(name="✨ Đặc Biệt", value="\n".join(dac_biet_lines), inline=False)
 
-    e.set_footer(text=f"Tạo nhân vật: {ngay_tao} | Hoạt động cuối: {datetime.now(datetime.UTC).strftime('%d/%m/%Y %H:%M')}")
+    e.set_footer(text=f"Tạo nhân vật: {ngay_tao} | Hoạt động cuối: {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M')}")
     if target.avatar:
         e.set_thumbnail(url=target.avatar.url)
     await ctx.send(embed=e)
@@ -1241,7 +1241,7 @@ async def tu_luyen(ctx):
         linh_luc=min(nv['linh_luc'] + ll_hoi, nv['linh_luc_max']),
         mana=new_mana, tho_nguyen=new_tho,
         kiem_linh_cap=new_kl_cap, kiem_linh_exp=new_kl_exp,
-        ban_do=ban_do_hien, last_tuluyen=datetime.now(datetime.UTC)
+        ban_do=ban_do_hien, last_tuluyen=datetime.now(timezone.utc)
     )
     await cap_nhat_tk(ctx.author.id, tong_tulyen=1, tong_exp=exp_gain, dot_pha_count=dp_cnt)
     await them_nhat_ky(ctx.author.id, "tuluyen", f"+{exp_gain:,} EXP, +{tv_gain:,} Tu Vi → {CANH_GIOI[new_cg]}")
@@ -1312,7 +1312,7 @@ async def be_quan(ctx, gio: int = None):
         await ctx.send(embed=embed_mau("🧘 Bế Quan",
             "Dùng: `!bequan <giờ>` (1-72 giờ)\nNhận EXP gấp **3x** khi xuất quan!\n⚠️ Không thể tu luyện khi bế quan.")); return
     gio = max(1, min(72, gio))
-    await cap_nhat(ctx.author.id, last_bequan=datetime.now(datetime.UTC), bequan_gio=gio)
+    await cap_nhat(ctx.author.id, last_bequan=datetime.now(timezone.utc), bequan_gio=gio)
     await them_nhat_ky(ctx.author.id,"bequan",f"Bế quan {gio} giờ")
     await ctx.send(embed=embed_mau("🧘 Bắt Đầu Bế Quan!",f"""
 Bế quan **{gio} giờ** bắt đầu!
@@ -1689,10 +1689,10 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
     if not hanh_dong:
         # Hiển thị trạng thái boss
         if trang_thai == 'chet':
-            next_spawn = boss_row['last_reset'] + timedelta(hours=2) if boss_row and boss_row['last_reset'] else datetime.now(datetime.UTC)
-            now_utc = datetime.now(datetime.UTC)
+            next_spawn = boss_row['last_reset'] + timedelta(hours=2) if boss_row and boss_row['last_reset'] else datetime.now(timezone.utc)
+            now_utc = datetime.now(timezone.utc)
             if hasattr(next_spawn, 'tzinfo') and next_spawn.tzinfo:
-                now_utc = datetime.now(next_spawn.tzinfo if next_spawn.tzinfo else datetime.UTC)
+                now_utc = datetime.now(next_spawn.tzinfo if next_spawn.tzinfo else timezone.utc)
             con_lai = max(0, int((next_spawn - now_utc).total_seconds()))
             h, m, s = con_lai//3600, (con_lai%3600)//60, con_lai%60
             await ctx.send(embed=embed_mau(
@@ -1841,7 +1841,7 @@ async def auto_boss_spawn():
             last_reset  = boss_row['last_reset']
 
             # Tính thời gian UTC hiện tại
-            now_utc = datetime.now(datetime.UTC)
+            now_utc = datetime.now(timezone.utc)
             if last_reset and last_reset.tzinfo:
                 now_utc = datetime.now(last_reset.tzinfo)
 
@@ -1916,7 +1916,7 @@ async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
             color=0xFF0000
         )
         e.set_image(url=boss_info.get("img", ""))
-        e.set_footer(text=f"⚡ Ta Tu Tiên | Boss xuất hiện lúc {datetime.now(datetime.UTC).strftime('%H:%M UTC')}")
+        e.set_footer(text=f"⚡ Ta Tu Tiên | Boss xuất hiện lúc {datetime.now(timezone.utc).strftime('%H:%M UTC')}")
         await channel.send(
             f"@everyone 🔔 **Boss Thế Giới xuất hiện tại {bd_info['ten']}!**",
             embed=e
@@ -2072,7 +2072,7 @@ async def trong_cay(ctx, hanh_dong: str = None, *, loai_cay: str = None):
         if dang_trong >= 5:
             await ctx.send(embed=embed_mau("❌","Vườn đầy rồi! Tối đa 5 ô. Thu hoạch trước!",0xFF4444)); return
 
-        thu_hoach_luc = datetime.now(datetime.UTC) + timedelta(seconds=cay['thoi_gian'])
+        thu_hoach_luc = datetime.now(timezone.utc) + timedelta(seconds=cay['thoi_gian'])
         await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-cay['gia_hat'])
         async with db_pool.acquire() as c:
             await c.execute("INSERT INTO vuon_cay(user_id,loai_cay,trong_luc,thu_hoach_luc) VALUES($1,$2,NOW(),$3)",
@@ -2111,7 +2111,7 @@ async def trong_cay(ctx, hanh_dong: str = None, *, loai_cay: str = None):
             await ctx.send(embed=embed_mau("🌿","Vườn trống!")); return
         lines=[]
         for r in cay_dang:
-            status = "✅ Chín!" if r['da_thu']==False and r['thu_hoach_luc'] and r['thu_hoach_luc'].replace(tzinfo=None)<=datetime.now(datetime.UTC) else ("🌱 Đang lớn" if not r['da_thu'] else "🍃 Đã thu")
+            status = "✅ Chín!" if r['da_thu']==False and r['thu_hoach_luc'] and r['thu_hoach_luc'].replace(tzinfo=None)<=datetime.now(timezone.utc) else ("🌱 Đang lớn" if not r['da_thu'] else "🍃 Đã thu")
             lines.append(f"{status} **{r['loai_cay']}**")
         await ctx.send(embed=embed_mau("🌿 Vườn Của Bạn","\n".join(lines)))
 
@@ -2212,7 +2212,7 @@ async def kham_pha(ctx):
             async with db_pool.acquire() as c:
                 await c.execute("INSERT INTO tui_do(user_id,vat_pham,so_luong) VALUES($1,$2,1) ON CONFLICT(user_id,vat_pham) DO UPDATE SET so_luong=tui_do.so_luong+1",ctx.author.id,vp_found)
 
-    await cap_nhat(ctx.author.id,linh_thach=nv['linh_thach']+lt,last_khampha=datetime.now(datetime.UTC))
+    await cap_nhat(ctx.author.id,linh_thach=nv['linh_thach']+lt,last_khampha=datetime.now(timezone.utc))
     await cap_nhat_tk(ctx.author.id,tong_lt_kiem=lt)
     await them_nhat_ky(ctx.author.id,"khampha",f"+{lt}💎"+(f", tìm {vp_found}" if vp_found else ""))
     await ctx.send(embed=embed_mau("🗺️ Khám Phá","\n".join(results),0x55AAFF))
