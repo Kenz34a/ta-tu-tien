@@ -94,13 +94,13 @@ TOC = {
 #  LINH CĂN
 # ══════════════════════════════════════════════════════════════
 LINH_CAN = {
-    "Thiên Linh Căn":   {"icon":"🌟","mo_ta":"Vạn năm hiếm có một, thiên phú tuyệt thế vô song",   "bonus_exp":200,"bonus_tulyen":150,"ty_le":1},
-    "Biến Linh Căn":    {"icon":"🌈","mo_ta":"5 hệ hỗn dung, tiến tốc kinh thiên động địa",          "bonus_exp":120,"bonus_tulyen":80, "ty_le":4},
-    "Tứ Linh Căn":      {"icon":"💫","mo_ta":"4 hệ linh căn cân bằng, thiên địa chứng đạo",          "bonus_exp":80, "bonus_tulyen":50, "ty_le":10},
-    "Tam Linh Căn":     {"icon":"✨","mo_ta":"3 hệ linh căn, khí vận phi thường",                    "bonus_exp":50, "bonus_tulyen":35, "ty_le":20},
-    "Song Linh Căn":    {"icon":"⭐","mo_ta":"2 hệ linh căn, tài chất xuất chúng",                   "bonus_exp":30, "bonus_tulyen":20, "ty_le":30},
-    "Đơn Linh Căn":     {"icon":"🔥","mo_ta":"1 hệ chuyên sâu, chuyên tinh hóa thần",               "bonus_exp":25, "bonus_tulyen":25, "ty_le":25},
-    "Phế Linh Căn":     {"icon":"💀","mo_ta":"Vô căn nhưng ý chí thép, nghịch thiên cải mệnh",      "bonus_exp":5,  "bonus_tulyen":5,  "ty_le":10},
+    "Thiên Linh Căn":   {"icon":"🌟","mo_ta":"Vạn năm hiếm có một, thiên phú tuyệt thế vô song",   "bonus_exp":200,"bonus_tuluyen":150,"ty_le":1},
+    "Biến Linh Căn":    {"icon":"🌈","mo_ta":"5 hệ hỗn dung, tiến tốc kinh thiên động địa",          "bonus_exp":120,"bonus_tuluyen":80, "ty_le":4},
+    "Tứ Linh Căn":      {"icon":"💫","mo_ta":"4 hệ linh căn cân bằng, thiên địa chứng đạo",          "bonus_exp":80, "bonus_tuluyen":50, "ty_le":10},
+    "Tam Linh Căn":     {"icon":"✨","mo_ta":"3 hệ linh căn, khí vận phi thường",                    "bonus_exp":50, "bonus_tuluyen":35, "ty_le":20},
+    "Song Linh Căn":    {"icon":"⭐","mo_ta":"2 hệ linh căn, tài chất xuất chúng",                   "bonus_exp":30, "bonus_tuluyen":20, "ty_le":30},
+    "Đơn Linh Căn":     {"icon":"🔥","mo_ta":"1 hệ chuyên sâu, chuyên tinh hóa thần",               "bonus_exp":25, "bonus_tuluyen":25, "ty_le":25},
+    "Phế Linh Căn":     {"icon":"💀","mo_ta":"Vô căn nhưng ý chí thép, nghịch thiên cải mệnh",      "bonus_exp":5,  "bonus_tuluyen":5,  "ty_le":10},
 }
 
 def random_linh_can() -> str:
@@ -424,11 +424,11 @@ THANH_TICH = {
     # Cơ bản
     "tan_dao":       {"ten":"⚔️ Tân Đạo",          "mo_ta":"Tạo nhân vật lần đầu"},
     # Tu luyện
-    "tulyen_10":     {"ten":"🧘 Siêng Năng",        "mo_ta":"Tu luyện 10 lần"},
-    "tulyen_100":    {"ten":"🔥 Khổ Tu",            "mo_ta":"Tu luyện 100 lần"},
-    "tulyen_500":    {"ten":"⛰️ Bế Quan Đại Sư",    "mo_ta":"Tu luyện 500 lần"},
-    "tulyen_1000":   {"ten":"🪨 Khổ Hạnh Giả",      "mo_ta":"Tu luyện 1000 lần"},
-    "tulyen_5000":   {"ten":"🌌 Vạn Cổ Khổ Tu",     "mo_ta":"Tu luyện 5000 lần"},
+    "tuluyen_10":     {"ten":"🧘 Siêng Năng",        "mo_ta":"Tu luyện 10 lần"},
+    "tuluyen_100":    {"ten":"🔥 Khổ Tu",            "mo_ta":"Tu luyện 100 lần"},
+    "tuluyen_500":    {"ten":"⛰️ Bế Quan Đại Sư",    "mo_ta":"Tu luyện 500 lần"},
+    "tuluyen_1000":   {"ten":"🪨 Khổ Hạnh Giả",      "mo_ta":"Tu luyện 1000 lần"},
+    "tuluyen_5000":   {"ten":"🌌 Vạn Cổ Khổ Tu",     "mo_ta":"Tu luyện 5000 lần"},
     # Boss
     "boss_1":        {"ten":"👹 Đồ Sát",            "mo_ta":"Giết boss đầu tiên"},
     "boss_50":       {"ten":"💀 Sát Thần",          "mo_ta":"Giết 50 boss"},
@@ -516,7 +516,7 @@ async def init_db():
                 kiem_linh_exp INT  DEFAULT 0,
                 dao_lu        BIGINT DEFAULT 0,
                 so_chet       INT  DEFAULT 0,
-                last_tulyen   TIMESTAMPTZ,
+                last_tuluyen   TIMESTAMPTZ,
                 last_khampha  TIMESTAMPTZ,
                 last_bequan   TIMESTAMPTZ,
                 bequan_gio    INT  DEFAULT 0,
@@ -567,7 +567,7 @@ async def init_db():
         await c.execute("""
             CREATE TABLE IF NOT EXISTS thong_ke (
                 user_id        BIGINT PRIMARY KEY REFERENCES nhanvat(user_id) ON DELETE CASCADE,
-                tong_tulyen    BIGINT DEFAULT 0, tong_exp  BIGINT DEFAULT 0,
+                tong_tuluyen    BIGINT DEFAULT 0, tong_exp  BIGINT DEFAULT 0,
                 tong_boss_giet BIGINT DEFAULT 0, tong_pvp_thang INT DEFAULT 0,
                 tong_pvp_thua  INT DEFAULT 0,    tong_lt_kiem BIGINT DEFAULT 0,
                 tong_lt_tieu   BIGINT DEFAULT 0, dot_pha_count INT DEFAULT 0,
@@ -780,11 +780,11 @@ async def kiem_tra_thanh_tich(ctx, uid, nv, tk):
     moi = []
     dk = {
         "tan_dao": True,
-        "tulyen_10":    tk and tk['tong_tulyen']>=10,
-        "tulyen_100":   tk and tk['tong_tulyen']>=100,
-        "tulyen_500":   tk and tk['tong_tulyen']>=500,
-        "tulyen_1000":  tk and tk['tong_tulyen']>=1000,
-        "tulyen_5000":  tk and tk['tong_tulyen']>=5000,
+        "tuluyen_10":    tk and tk['tong_tuluyen']>=10,
+        "tuluyen_100":   tk and tk['tong_tuluyen']>=100,
+        "tuluyen_500":   tk and tk['tong_tuluyen']>=500,
+        "tuluyen_1000":  tk and tk['tong_tuluyen']>=1000,
+        "tuluyen_5000":  tk and tk['tong_tuluyen']>=5000,
         "boss_1":       tk and tk['tong_boss_giet']>=1,
         "boss_50":      tk and tk['tong_boss_giet']>=50,
         "boss_100":     tk and tk['tong_boss_giet']>=100,
@@ -1114,7 +1114,7 @@ async def thong_tin(ctx, member: discord.Member = None):
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: TU LUYỆN
 # ══════════════════════════════════════════════════════════════
-@bot.command(name="tulyen", aliases=["tl"])
+@bot.command(name="tuluyen", aliases=["tl"])
 async def tu_luyen(ctx):
     nv = await get_nv(ctx.author.id)
     if not nv:
@@ -1127,14 +1127,14 @@ async def tu_luyen(ctx):
             con_lai = int((end - datetime.now(nv['last_bequan'].tzinfo)).total_seconds()) // 60
             await ctx.send(embed=embed_mau("🧘 Đang Bế Quan",f"Còn **{con_lai}** phút nữa!\n`!xuatquan` để xuất quan.",0xFFAA00)); return
 
-    cd = cooldown_con(nv['last_tulyen'], 15)
+    cd = cooldown_con(nv['last_tuluyen'], 15)
     if cd > 0:
         await ctx.send(embed=embed_mau("⏳",f"Còn **{cd:.0f}s** nữa!",0xFFAA00)); return
 
     lc_info  = LINH_CAN.get(nv['linh_can'], {})
     toc_info = TOC.get(nv['toc'], {})
     exp_bonus  = lc_info.get("bonus_exp", 0) + toc_info.get("bonus_exp", 0)
-    tuvi_bonus = lc_info.get("bonus_tulyen", 0)
+    tuvi_bonus = lc_info.get("bonus_tuluyen", 0)
     cg = nv['canh_gioi']
 
     # Passive bonus
@@ -1226,10 +1226,10 @@ async def tu_luyen(ctx):
         linh_luc=min(nv['linh_luc'] + ll_hoi, nv['linh_luc_max']),
         mana=new_mana, tho_nguyen=new_tho,
         kiem_linh_cap=new_kl_cap, kiem_linh_exp=new_kl_exp,
-        ban_do=ban_do_hien, last_tulyen=datetime.utcnow()
+        ban_do=ban_do_hien, last_tuluyen=datetime.utcnow()
     )
-    await cap_nhat_tk(ctx.author.id, tong_tulyen=1, tong_exp=exp_gain, dot_pha_count=dp_cnt)
-    await them_nhat_ky(ctx.author.id, "tulyen", f"+{exp_gain:,} EXP, +{tv_gain:,} Tu Vi → {CANH_GIOI[new_cg]}")
+    await cap_nhat_tk(ctx.author.id, tong_tuluyen=1, tong_exp=exp_gain, dot_pha_count=dp_cnt)
+    await them_nhat_ky(ctx.author.id, "tuluyen", f"+{exp_gain:,} EXP, +{tv_gain:,} Tu Vi → {CANH_GIOI[new_cg]}")
 
     nv2 = await get_nv(ctx.author.id)
     async with db_pool.acquire() as c:
@@ -1334,7 +1334,7 @@ async def _xuat_quan(ctx, nv):
 
     await cap_nhat(ctx.author.id, exp=new_exp, tu_vi=nv['tu_vi']+tv_gain,
                    canh_gioi=new_cg, bequan_gio=0)
-    await cap_nhat_tk(ctx.author.id, tong_tulyen=gio_thuc*6, tong_exp=exp_gain)
+    await cap_nhat_tk(ctx.author.id, tong_tuluyen=gio_thuc*6, tong_exp=exp_gain)
     await them_nhat_ky(ctx.author.id,"xuatquan",f"Xuất quan sau {gio_thuc}h, +{exp_gain} EXP")
 
     await ctx.send(embed=embed_mau("🌅 Xuất Quan Thành Công!", f"""
@@ -1511,7 +1511,7 @@ async def danh_boss(ctx, so_boss: int = None):
         color = 0x55FF55
     else:
         await cap_nhat(ctx.author.id, linh_luc=1, so_chet=nv['so_chet']+1)
-        await cap_nhat_tk(ctx.author.id, tong_tulyen=0)
+        await cap_nhat_tk(ctx.author.id, tong_tuluyen=0)
         await them_nhat_ky(ctx.author.id,"boss",f"Bại trận trước **{boss['ten']}**")
         result = "\n".join(rounds)+"\n...\n\n💀 **THẤT BẠI!** Hồi phục rồi thử lại!"
         color = 0xFF4444
@@ -1863,7 +1863,7 @@ async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
 # ══════════════════════════════════════════════════════════════
 @bot.command(name="thap", aliases=["tower"])
 async def thap_thu_luyen(ctx):
-    """!thap — Leo tháp thử luyện, mỗi tầng tăng dần (2 phút/lần)"""
+    """!thap — Leo tháp thử luyện, mỗi tầng tăng dần (1 phút/lần)"""
     nv = await get_nv(ctx.author.id)
     if not nv:
         await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
@@ -1911,7 +1911,7 @@ async def thap_thu_luyen(ctx):
 💎 +{tang_lt:,} Linh Thạch | ✨ +{tang_exp:,} EXP
 🏯 Tầng hiện tại: **{new_tang}**
 
-Dùng `!thap` sau 2 phút để leo tiếp!
+Dùng `!thap` sau 1 phút để leo tiếp!
         """, 0x55FF55))
     else:
         # Thua thì về tầng 1
@@ -2408,7 +2408,7 @@ async def hanh_trang(ctx, member: discord.Member = None):
 # ══════════════════════════════════════════════════════════════
 @bot.command(name="cau", aliases=["fishing","fish"])
 async def cau_ca(ctx, so_luong: int = 1):
-    """!cau [số] — Câu cá tiêu mana, nhận tu vi và linh thạch (30s/lần)"""
+    """!cau [số] — Câu cá tiêu mana, nhận tu vi và linh thạch (20s/lần)"""
     nv = await get_nv(ctx.author.id)
     if not nv:
         await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
@@ -2778,7 +2778,7 @@ async def thong_ke(ctx, member: discord.Member = None):
     async with db_pool.acquire() as c:
         thap = await c.fetchrow("SELECT tang_hien FROM thap_thu_luyen WHERE user_id=$1",target.id)
     await ctx.send(embed=embed_mau(f"📊 Thống Kê — {nv['ten']}",f"""
-🧘 Tu Luyện: {tk['tong_tulyen']:,} lần | 🔥 Đột Phá: {tk['dot_pha_count']} lần
+🧘 Tu Luyện: {tk['tong_tuluyen']:,} lần | 🔥 Đột Phá: {tk['dot_pha_count']} lần
 ✨ Tổng EXP: {tk['tong_exp']:,}
 👹 Boss đã giết: {tk['tong_boss_giet']:,}
 ⚔️ PvP: {tk['tong_pvp_thang']}T/{tk['tong_pvp_thua']}B ({wr})
@@ -2796,7 +2796,7 @@ async def nhat_ky_cmd(ctx):
         rows=await c.fetch("SELECT loai,noi_dung,created_at FROM nhat_ky WHERE user_id=$1 ORDER BY created_at DESC LIMIT 15",ctx.author.id)
     if not rows:
         await ctx.send(embed=embed_mau("📖 Trống","Hãy bắt đầu tu luyện!")); return
-    icons={"tulyen":"🧘","khampha":"🗺️","boss":"👹","pvp":"⚔️","bequan":"🧘","xuatquan":"🌅","system":"📌"}
+    icons={"tuluyen":"🧘","khampha":"🗺️","boss":"👹","pvp":"⚔️","bequan":"🧘","xuatquan":"🌅","system":"📌"}
     lines=[f"{icons.get(r['loai'],'📝')} `{r['created_at'].strftime('%d/%m %H:%M')}` {r['noi_dung']}" for r in rows]
     await ctx.send(embed=embed_mau(f"📖 Nhật Ký — {nv['ten']}","\n".join(lines)))
 
@@ -2848,8 +2848,8 @@ HELP_PAGES = [
 `!bxh` — Bảng xếp hạng lực chiến
 
 **⚡ Tu Luyện**
-`!tulyen` — Tu luyện *(60s cooldown)*
-`!khampha` — Khám phá tìm đồ *(120s)*
+`!tuluyen` — Tu luyện *(15s cooldown)*
+`!khampha` — Khám phá tìm đồ *(30s)*
 `!bequan <giờ>` — Bế quan 1-72h *(EXP x3)*
 `!xuatquan` — Xuất quan nhận thưởng
 
@@ -2866,7 +2866,7 @@ HELP_PAGES = [
 `!bossthegioi` — Xem boss thế giới
 `!bossthegioi tan` — Tấn công boss thế giới
 `!pvp @người` — Thách đấu PvP
-`!thap` — Tháp thử luyện *(120s)*
+`!thap` — Tháp thử luyện *(60s)*
 
 **☯️ Đạo & Công Pháp**
 `!chondao` — Xem / chọn đạo chính
