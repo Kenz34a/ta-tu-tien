@@ -1689,15 +1689,15 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
     if not hanh_dong:
         # Hiển thị trạng thái boss
         if trang_thai == 'chet':
-            next_spawn = boss_row['last_reset'] + timedelta(hours=2) if boss_row and boss_row['last_reset'] else datetime.now(timezone.utc)
-            now_utc = datetime.now(timezone.utc)
-            if hasattr(next_spawn, 'tzinfo') and next_spawn.tzinfo:
-                now_utc = datetime.now(next_spawn.tzinfo if next_spawn.tzinfo else timezone.utc)
-            con_lai = max(0, int((next_spawn - now_utc).total_seconds()))
+            next_spawn = gio_spawn_tiep_theo()
+            now_vn = datetime.now(VN_TZ)
+            con_lai = max(0, int((next_spawn - now_vn).total_seconds()))
             h, m, s = con_lai//3600, (con_lai%3600)//60, con_lai%60
             await ctx.send(embed=embed_mau(
                 f"💀 Boss Thế Giới — {BAN_DO[gioi]['ten']}",
-                f"**Boss đang hồi sinh...**\n⏰ Xuất hiện sau: **{h}h {m}m {s}s**\n\n"
+                f"**Boss đang hồi sinh...**\n"
+                f"⏰ Xuất hiện lúc: **{next_spawn.strftime('%H:%M')}h** (sau {h}h {m}m {s}s)\n"
+                f"📅 Lịch spawn: 0h · 2h · 4h · 6h · 8h · 10h · 12h · 14h · 16h · 18h · 20h · 22h\n\n"
                 f"Boss tiếp theo: **{boss_info['ten']}**\n"
                 f"❤️ HP: **{boss_info['hp']:,}** | Cần Lv.**{boss_info['cap_yeu']}**",
                 0x888888
@@ -1818,14 +1818,33 @@ async def set_channel(ctx, loai: str = "boss"):
     await ctx.send(embed=embed_mau("✅ Đã Thiết Lập",f"Kênh **#{ctx.channel.name}** sẽ nhận thông báo Boss Thế Giới!",0x55FF55))
 
 # ══════════════════════════════════════════════════════════════
-#  TASK: TỰ ĐỘNG THÔNG BÁO BOSS XUẤT HIỆN (mỗi 2 giờ thực)
+#  TASK: TỰ ĐỘNG SPAWN BOSS THEO GIỜ CHẴN (0h,2h,4h,6h...UTC+7)
 # ══════════════════════════════════════════════════════════════
-@tasks.loop(minutes=5)
+VN_TZ = timezone(timedelta(hours=7))  # UTC+7
+
+def gio_spawn_tiep_theo() -> datetime:
+    """Tính thời điểm spawn tiếp theo: giờ chẵn kế (0,2,4,6,8,10,12,14,16,18,20,22h VN)"""
+    now = datetime.now(VN_TZ)
+    # Làm tròn lên giờ chẵn tiếp theo
+    gio_hien = now.hour
+    gio_tiep = ((gio_hien // 2) + 1) * 2  # giờ chẵn kế
+    if gio_tiep >= 24:
+        # sang ngày hôm sau 0h
+        ngay_mai = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        return ngay_mai
+    return now.replace(hour=gio_tiep, minute=0, second=0, microsecond=0)
+
+@tasks.loop(hours=2)
 async def auto_boss_spawn():
-    """Mỗi 5 phút check — spawn boss nếu đã đủ 2 tiếng kể từ lần reset cuối"""
+    """Spawn boss ở TẤT CẢ các giới đúng giờ chẵn (0,2,4,...22h VN)"""
     if db_pool is None: return
     channel = bot.get_channel(BOSS_CHANNEL_ID)
-    if not channel: return
+    if not channel:
+        print("⚠️ auto_boss_spawn: Chưa set BOSS_CHANNEL_ID! Dùng !setchannel")
+        return
+
+    now_vn = datetime.now(VN_TZ)
+    print(f"🔔 auto_boss_spawn chạy lúc {now_vn.strftime('%H:%M %d/%m/%Y')} (VN)")
 
     for gioi, bd_info in BAN_DO.items():
         if gioi not in BOSS_THE_GIOI_LIST:
@@ -1833,50 +1852,58 @@ async def auto_boss_spawn():
         try:
             async with db_pool.acquire() as c:
                 boss_row = await c.fetchrow("SELECT * FROM boss_the_gioi WHERE gioi=$1", gioi)
-
             if not boss_row:
                 continue
 
             trang_thai = boss_row['trang_thai']
-            last_reset  = boss_row['last_reset']
 
-            # Tính thời gian UTC hiện tại
-            now_utc = datetime.now(timezone.utc)
-            if last_reset and last_reset.tzinfo:
-                now_utc = datetime.now(last_reset.tzinfo)
+            # Nếu boss đang sống → đóng + phát thưởng trước khi spawn mới
+            if trang_thai == 'song':
+                boss_idx  = boss_row['boss_idx'] if boss_row else 0
+                boss_info = get_boss_hien_tai(gioi, boss_idx)
+                next_idx  = (boss_idx + 1) % len(BOSS_THE_GIOI_LIST[gioi])
+                next_boss = get_boss_hien_tai(gioi, next_idx)
+                async with db_pool.acquire() as c:
+                    await c.execute("""
+                        UPDATE boss_the_gioi SET trang_thai='chet', hp_hien=$2,
+                        boss_idx=$3, last_reset=NOW() WHERE gioi=$1
+                    """, gioi, next_boss["hp"], next_idx)
+                if boss_row['xuat_hien_luc']:
+                    await gui_phan_thuong_boss(gioi, boss_info, boss_row['xuat_hien_luc'])
 
-            # Nếu boss đang sống, kiểm tra đã qua 2 tiếng chưa → đóng boss
-            if trang_thai == 'song' and last_reset:
-                elapsed = (now_utc - last_reset).total_seconds()
-                if elapsed >= 7200:
-                    boss_idx  = boss_row['boss_idx'] if boss_row else 0
-                    boss_info = get_boss_hien_tai(gioi, boss_idx)
-                    next_idx  = (boss_idx + 1) % len(BOSS_THE_GIOI_LIST[gioi])
-                    next_boss = get_boss_hien_tai(gioi, next_idx)
-                    async with db_pool.acquire() as c:
-                        await c.execute("""
-                            UPDATE boss_the_gioi SET trang_thai='chet', hp_hien=$2,
-                            boss_idx=$3, last_reset=NOW() WHERE gioi=$1
-                        """, gioi, next_boss["hp"], next_idx)
-                    # Phát thưởng
-                    if boss_row['xuat_hien_luc']:
-                        await gui_phan_thuong_boss(gioi, boss_info, boss_row['xuat_hien_luc'])
-                    await channel.send(embed=embed_mau(
-                        f"⏰ Boss Rút Lui — {bd_info['ten']}",
-                        f"**{boss_info['ten']}** đã rút lui sau 2 giờ!\n"
-                        f"Phần thưởng đã gửi về DM các tu sĩ đã tham chiến!\n"
-                        f"⏰ Boss mới sẽ xuất hiện sau **2 giờ**!",
-                        0x888888
-                    ))
-
-            # Nếu boss chết và đã qua 2 tiếng kể từ last_reset → spawn boss mới
-            elif trang_thai == 'chet' and last_reset:
-                elapsed = (now_utc - last_reset).total_seconds()
-                if elapsed >= 7200:
-                    await _spawn_boss_gioi(gioi, bd_info, channel)
+            # Spawn boss mới
+            await _spawn_boss_gioi(gioi, bd_info, channel)
 
         except Exception as err:
-            print(f"❌ Lỗi check boss [{gioi}]: {err}")
+            print(f"❌ Lỗi spawn boss [{gioi}]: {err}")
+
+@auto_boss_spawn.before_loop
+async def before_boss_spawn():
+    """Khi bot khởi động: spawn ngay nếu boss đang chết, rồi sync về giờ chẵn tiếp theo"""
+    await bot.wait_until_ready()
+    await asyncio.sleep(3)  # đợi DB init xong
+
+    # Spawn ngay nếu boss đang chet (bị miss do bot restart)
+    channel = bot.get_channel(BOSS_CHANNEL_ID)
+    if channel and db_pool:
+        for gioi, bd_info in BAN_DO.items():
+            if gioi not in BOSS_THE_GIOI_LIST:
+                continue
+            try:
+                async with db_pool.acquire() as c:
+                    row = await c.fetchrow("SELECT trang_thai FROM boss_the_gioi WHERE gioi=$1", gioi)
+                if row and row['trang_thai'] == 'chet':
+                    print(f"🚀 Startup spawn boss [{gioi}]")
+                    await _spawn_boss_gioi(gioi, bd_info, channel)
+            except Exception as e:
+                print(f"⚠️ Startup spawn [{gioi}]: {e}")
+
+    # Tính thời gian đợi đến giờ chẵn kế tiếp để sync lại loop
+    tiep_theo = gio_spawn_tiep_theo()
+    now = datetime.now(VN_TZ)
+    doi = (tiep_theo - now).total_seconds()
+    print(f"⏳ Boss loop sync: spawn kế lúc {tiep_theo.strftime('%H:%M')}h VN (sau {doi/3600:.1f}h)")
+    await asyncio.sleep(max(0, doi))
 
 async def _spawn_boss_gioi(gioi: str, bd_info: dict, channel):
     """Spawn boss 1 giới: cập nhật DB + gửi thông báo"""
