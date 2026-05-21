@@ -113,7 +113,12 @@ def random_linh_can() -> str:
 #  LỰC CHIẾN
 # ══════════════════════════════════════════════════════════════
 def tinh_luc_chien(nv) -> int:
-    base = nv['tan_cong'] * 8 + nv['phong_thu'] * 6 + nv['linh_luc_max'] // 20
+    try:
+        gear = tong_bonus_trang_bi(nv)
+    except Exception:
+        gear = {"atk":0, "def":0, "hp":0, "crit":0}
+    base = (nv['tan_cong'] + gear["atk"]) * 8 + (nv['phong_thu'] + gear["def"]) * 6 + (nv['linh_luc_max'] + gear["hp"]) // 20
+    base += gear["crit"] * 120
     cg = nv['canh_gioi']
     cg_bonus = int(500 * (2.2 ** cg))   # exponential nhưng không quá điên
     tv_bonus = nv['tu_vi'] // 500
@@ -286,32 +291,174 @@ PHAM_CHAT = ["Phàm","Linh","Huyền","Địa","Thiên","Vương","Hoàng","Đ�
 PHAM_CHAT_ICON = ["⚪","🟢","🔵","🟣","🟡","🔶","🟠","🔴","⭐","💫","✨","🌟","🌈","☀️"]
 PHAM_CHAT_BONUS = [1,2,3,5,8,12,18,26,36,50,70,100,150,200]
 
-LOAI_TRANG_BI = ["Vũ Khí","Giáp","Mũ","Nhẫn","Vòng Tay","Đai Lưng","Hài","Áo Choàng"]
+LOAI_TRANG_BI = [
+    "Vũ Khí","Giáp","Mũ","Nhẫn","Vòng Tay","Đai Lưng","Hài","Áo Choàng",
+    "Dây Chuyền","Ngọc Bội","Pháp Bảo","Ấn","Cánh","Hộ Phù","Lệnh Bài","Linh Châu"
+]
 TRANG_BI_TEN = {
-    "Vũ Khí":    ["Kiếm","Đao","Thương","Cung","Phủ Việt","Chùy","Tiêu","Trượng"],
-    "Giáp":      ["Giáp Sắt","Linh Giáp","Huyền Giáp","Kim Cang Giáp","Tiên Giáp"],
-    "Mũ":        ["Mũ Linh","Mũ Huyền","Kim Quan","Tiên Miện","Thần Quan"],
-    "Nhẫn":      ["Nhẫn Linh","Nhẫn Pháp","Nhẫn Không Gian","Nhẫn Đạo"],
-    "Vòng Tay":  ["Vòng Ngọc","Vòng Linh","Vòng Thần Lực","Vòng Tiên"],
-    "Đai Lưng":  ["Đai Linh","Đai Huyền","Đai Thần Lực"],
-    "Hài":       ["Hài Linh","Hài Phong","Hài Tiên"],
-    "Áo Choàng": ["Áo Linh","Áo Huyền","Áo Tiên","Áo Thần"],
+    "Vũ Khí": [
+        "Kiếm","Đao","Thương","Cung","Phủ Việt","Chùy","Tiêu","Trượng",
+        "Song Kiếm","Huyết Đao","Lôi Thương","Hỏa Cung","Băng Kích","Long Nha",
+        "Thiên Kiếm","Ma Đao","Tinh Hà Trượng","Hỗn Độn Kích","Vạn Kiếp Luân",
+        "Thái Cổ Thần Kiếm","Vô Thượng Đạo Kiếm"
+    ],
+    "Giáp": [
+        "Giáp Sắt","Linh Giáp","Huyền Giáp","Kim Cang Giáp","Tiên Giáp",
+        "Long Lân Giáp","Huyết Ma Giáp","Tinh Thần Chiến Giáp","Hỗn Độn Huyền Giáp",
+        "Thái Cổ Thần Giáp","Vô Thượng Đạo Giáp"
+    ],
+    "Mũ": [
+        "Mũ Linh","Mũ Huyền","Kim Quan","Tiên Miện","Thần Quan",
+        "Long Vương Miện","Thiên Đế Quan","Hỗn Độn Đạo Quan","Vô Thượng Thần Quan"
+    ],
+    "Nhẫn": [
+        "Nhẫn Linh","Nhẫn Pháp","Nhẫn Không Gian","Nhẫn Đạo",
+        "Nhẫn Càn Khôn","Nhẫn Tụ Linh","Nhẫn Hư Không","Nhẫn Hồng Mông","Nhẫn Vô Cực"
+    ],
+    "Vòng Tay": [
+        "Vòng Ngọc","Vòng Linh","Vòng Thần Lực","Vòng Tiên",
+        "Vòng Cửu Thiên","Vòng Huyền Băng","Vòng Lôi Kiếp","Vòng Thời Không"
+    ],
+    "Đai Lưng": [
+        "Đai Linh","Đai Huyền","Đai Thần Lực","Đai Càn Khôn",
+        "Đai Long Văn","Đai Hộ Mệnh","Đai Hỗn Độn","Đai Vô Lượng"
+    ],
+    "Hài": [
+        "Hài Linh","Hài Phong","Hài Tiên","Hài Lôi Ảnh",
+        "Hài Hư Không","Hài Thần Hành","Hài Vạn Dặm","Hài Thời Không"
+    ],
+    "Áo Choàng": [
+        "Áo Linh","Áo Huyền","Áo Tiên","Áo Thần",
+        "Áo Choàng Hắc Viêm","Áo Choàng Tinh Hà","Áo Choàng Hư Không",
+        "Áo Choàng Hồng Mông","Áo Choàng Vô Thượng"
+    ],
+    "Dây Chuyền": [
+        "Dây Chuyền Linh Tâm","Dây Chuyền Huyền Thiên","Dây Chuyền Tinh Nguyệt",
+        "Dây Chuyền Cửu U","Dây Chuyền Thiên Mệnh","Dây Chuyền Vạn Đạo"
+    ],
+    "Ngọc Bội": [
+        "Ngọc Bội Bình An","Ngọc Bội Tụ Linh","Ngọc Bội Long Hồn",
+        "Ngọc Bội Huyền Vũ","Ngọc Bội Hồng Mông","Ngọc Bội Vô Cực"
+    ],
+    "Pháp Bảo": [
+        "Linh Hồ Lô","Bát Quái Kính","Phiên Thiên Ấn","Trấn Hồn Chuông",
+        "Càn Khôn Đỉnh","Sơn Hà Xã Tắc Đồ","Hỗn Độn Chung","Vạn Giới Tháp"
+    ],
+    "Ấn": [
+        "Ấn Sơn Hà","Ấn Lôi Phạt","Ấn Hỏa Liên","Ấn Cửu Long",
+        "Ấn Thiên Đạo","Ấn Hồng Mông","Ấn Vô Thượng"
+    ],
+    "Cánh": [
+        "Cánh Phong Linh","Cánh Lôi Điểu","Cánh Thiên Sứ","Cánh Ma Thần",
+        "Cánh Tinh Hà","Cánh Thời Không","Cánh Vô Cực"
+    ],
+    "Hộ Phù": [
+        "Hộ Phù Linh Quang","Hộ Phù Kim Cang","Hộ Phù Trấn Tâm",
+        "Hộ Phù Thiên Kiếp","Hộ Phù Sinh Tử","Hộ Phù Đại Đạo"
+    ],
+    "Lệnh Bài": [
+        "Lệnh Bài Tông Môn","Lệnh Bài Trấn Ma","Lệnh Bài Thiên Cơ",
+        "Lệnh Bài Tiên Đế","Lệnh Bài Đạo Chủ","Lệnh Bài Chí Tôn"
+    ],
+    "Linh Châu": [
+        "Linh Châu Thủy","Linh Châu Hỏa","Linh Châu Lôi","Linh Châu Mộc",
+        "Linh Châu Âm Dương","Linh Châu Hỗn Độn","Linh Châu Vô Thượng"
+    ],
 }
 
-def gen_trang_bi(cap_yeu=0):
+GEAR_SLOT_PROFILE = {
+    "Vũ Khí":     {"atk":14, "def":2,  "hp":0,   "crit":4},
+    "Giáp":       {"atk":2,  "def":14, "hp":90,  "crit":0},
+    "Mũ":         {"atk":3,  "def":8,  "hp":55,  "crit":0},
+    "Nhẫn":       {"atk":8,  "def":3,  "hp":25,  "crit":2},
+    "Vòng Tay":   {"atk":6,  "def":5,  "hp":35,  "crit":1},
+    "Đai Lưng":   {"atk":3,  "def":9,  "hp":70,  "crit":0},
+    "Hài":        {"atk":4,  "def":5,  "hp":30,  "crit":2},
+    "Áo Choàng":  {"atk":4,  "def":9,  "hp":65,  "crit":1},
+    "Dây Chuyền": {"atk":6,  "def":4,  "hp":45,  "crit":2},
+    "Ngọc Bội":   {"atk":4,  "def":6,  "hp":60,  "crit":1},
+    "Pháp Bảo":   {"atk":10, "def":8,  "hp":75,  "crit":3},
+    "Ấn":         {"atk":9,  "def":7,  "hp":50,  "crit":2},
+    "Cánh":       {"atk":7,  "def":5,  "hp":40,  "crit":4},
+    "Hộ Phù":     {"atk":2,  "def":11, "hp":85,  "crit":0},
+    "Lệnh Bài":   {"atk":5,  "def":7,  "hp":55,  "crit":1},
+    "Linh Châu":  {"atk":7,  "def":6,  "hp":65,  "crit":2},
+}
+
+def xac_dinh_pham_trang_bi(ten: str) -> int:
+    ten = (ten or "").strip()
+    for i in range(len(PHAM_CHAT) - 1, -1, -1):
+        if ten.startswith(PHAM_CHAT_ICON[i]) or ten.lower().startswith(PHAM_CHAT[i].lower()):
+            return i
+    return 0
+
+def xac_dinh_loai_trang_bi(ten: str):
+    ten_l = (ten or "").lower()
+    candidates = []
+    for loai in LOAI_TRANG_BI:
+        for ten_base in TRANG_BI_TEN.get(loai, []):
+            if ten_base.lower() in ten_l:
+                candidates.append((len(ten_base), loai))
+    if not candidates:
+        return None
+    return max(candidates)[1]
+
+def chi_so_trang_bi(ten: str, loai_hint: str = None) -> dict:
+    loai = loai_hint or xac_dinh_loai_trang_bi(ten)
+    pham = xac_dinh_pham_trang_bi(ten)
+    mul = PHAM_CHAT_BONUS[pham]
+    profile = GEAR_SLOT_PROFILE.get(loai, {"atk":4, "def":4, "hp":30, "crit":0})
+    return {
+        "loai": loai or "Không rõ",
+        "pham": pham,
+        "atk": profile["atk"] * mul,
+        "def": profile["def"] * mul,
+        "hp": profile["hp"] * mul,
+        "crit": min(60, profile.get("crit", 0) + pham // 2),
+    }
+
+def tong_bonus_trang_bi(nv_or_tb) -> dict:
+    if isinstance(nv_or_tb, dict) and "trang_bi" not in nv_or_tb:
+        tb_dict = nv_or_tb
+    else:
+        tb_dict = json.loads(nv_or_tb.get('trang_bi','{}') or '{}')
+    total = {"atk":0, "def":0, "hp":0, "crit":0}
+    for loai, ten in tb_dict.items():
+        st = chi_so_trang_bi(ten, loai)
+        total["atk"] += st["atk"]
+        total["def"] += st["def"]
+        total["hp"]  += st["hp"]
+        total["crit"] += st["crit"]
+    total["crit"] = min(75, total["crit"])
+    return total
+
+def chi_so_chien_dau(nv) -> dict:
+    gear = tong_bonus_trang_bi(nv)
+    return {
+        "tan_cong": nv['tan_cong'] + gear["atk"],
+        "phong_thu": nv['phong_thu'] + gear["def"],
+        "linh_luc_max": nv['linh_luc_max'] + gear["hp"],
+        "crit": gear["crit"],
+        "gear": gear,
+    }
+
+def mo_ta_chi_so_trang_bi(ten: str, loai_hint: str = None) -> str:
+    st = chi_so_trang_bi(ten, loai_hint)
+    return f"⚔️+{st['atk']:,} | 🛡️+{st['def']:,} | ❤️+{st['hp']:,} | 💥+{st['crit']}%"
+
+def gen_trang_bi(cap_yeu=0, loai_chon: str = None):
     pham = min(cap_yeu // 3, 13)
     pham = max(0, pham + random.randint(-1, 1))
     pham = max(0, min(13, pham))
-    loai = random.choice(LOAI_TRANG_BI)
+    loai = loai_chon if loai_chon in LOAI_TRANG_BI else random.choice(LOAI_TRANG_BI)
     ten_base = random.choice(TRANG_BI_TEN.get(loai, ["Bảo Khí"]))
     icon = PHAM_CHAT_ICON[pham]
     mul = PHAM_CHAT_BONUS[pham]
-    atk = random.randint(5,15) * mul if loai == "Vũ Khí" else random.randint(0,5) * mul
-    def_ = random.randint(5,12) * mul if loai != "Vũ Khí" else random.randint(0,3) * mul
     ten_day_du = f"{icon}{PHAM_CHAT[pham]} {ten_base}"
+    st = chi_so_trang_bi(ten_day_du, loai)
     return {
         "ten": ten_day_du, "loai": loai, "pham_chat": pham,
-        "atk": atk, "def": def_,
+        "atk": st["atk"], "def": st["def"], "hp": st["hp"], "crit": st["crit"],
         "gia_ban": mul * random.randint(100,300)
     }
 
@@ -1073,6 +1220,7 @@ async def thong_tin(ctx, member: discord.Member = None):
 
     # Trang bị slot
     tb_dict = json.loads(nv.get('trang_bi','{}') or '{}')
+    gear_bonus = tong_bonus_trang_bi(tb_dict)
 
     # Tính ngày tạo
     ngay_tao = nv['created_at'].strftime('%d/%m/%Y') if nv.get('created_at') else 'N/A'
@@ -1131,6 +1279,9 @@ async def thong_tin(ctx, member: discord.Member = None):
     slot_icons = {
         "Công Pháp": "🔥", "Vũ Khí":"⚔️", "Giáp":"🛡️",
         "Pháp Bảo":"💎", "Bí Cảnh":"🌌", "Nhẫn":"💍",
+        "Vòng Tay":"📿", "Đai Lưng":"🎗️", "Hài":"👢", "Áo Choàng":"🧥",
+        "Dây Chuyền":"📿", "Ngọc Bội":"🔷", "Ấn":"🔰", "Cánh":"🪽",
+        "Hộ Phù":"🪬", "Lệnh Bài":"🎖️", "Linh Châu":"🔮",
         "Cần Câu":"🎣", "Kiếm Linh":"⚔️"
     }
     trang_bi_lines = []
@@ -1140,6 +1291,10 @@ async def thong_tin(ctx, member: discord.Member = None):
     for loai, ten in tb_dict.items():
         icon = slot_icons.get(loai, "📦")
         trang_bi_lines.append(f"{icon} {loai}: **{ten}**")
+    if tb_dict:
+        trang_bi_lines.append(
+            f"📊 Bonus: ⚔️+{gear_bonus['atk']:,} | 🛡️+{gear_bonus['def']:,} | ❤️+{gear_bonus['hp']:,} | 💥+{gear_bonus['crit']}%"
+        )
     if nv.get('bi_canh'):
         trang_bi_lines.append(f"🌌 Bí Cảnh: **{nv['bi_canh']}**")
     can_cau_hien = nv.get('can_cau','Đại Đạo Cần')
@@ -1546,14 +1701,16 @@ async def danh_boss(ctx, so_boss: int = None):
         if cp in CONG_PHAP_TAN_CONG: atk_bonus += CONG_PHAP_TAN_CONG[cp]['sat_thuong']
         if cp in DAI_THAN_THONG: atk_bonus += DAI_THAN_THONG[cp]['sat_thuong']
     kl_bonus = KIEM_LINH_BONUS[min(nv['kiem_linh_cap'],len(KIEM_LINH_BONUS)-1)]
+    cs = chi_so_chien_dau(nv)
 
     p_hp = nv['linh_luc']
     b_hp = boss['hp']
     rounds = []
     for turn in range(1,31):
-        base_atk = nv['tan_cong'] + atk_bonus
-        p_atk = max(1, int(random.randint(base_atk, base_atk*2) * (1+kl_bonus/100)) - boss['sat_thuong']//4)
-        b_atk = max(1, random.randint(boss['sat_thuong']//2, boss['sat_thuong']) - nv['phong_thu'])
+        base_atk = cs["tan_cong"] + atk_bonus
+        crit = 1.6 if random.randint(1, 100) <= cs["crit"] else 1.0
+        p_atk = max(1, int(random.randint(base_atk, base_atk*2) * (1+kl_bonus/100) * crit) - boss['sat_thuong']//4)
+        b_atk = max(1, random.randint(boss['sat_thuong']//2, boss['sat_thuong']) - cs["phong_thu"])
         b_hp -= p_atk; p_hp -= b_atk
         if turn<=3: rounds.append(f"Lượt {turn}: Bạn gây **{p_atk:,}** | Boss gây **{b_atk:,}**")
         if p_hp<=0 or b_hp<=0: break
@@ -1843,9 +2000,11 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
         atk_bonus = sum(CONG_PHAP_TAN_CONG.get(cp,{}).get('sat_thuong',0) for cp in cp_list)
         atk_bonus += sum(DAI_THAN_THONG.get(cp,{}).get('sat_thuong',0) for cp in cp_list)
         kl_bonus = KIEM_LINH_BONUS[min(nv['kiem_linh_cap'],len(KIEM_LINH_BONUS)-1)]
-        base_atk = nv['tan_cong'] + atk_bonus
-        dmg = int(random.randint(base_atk*3, base_atk*10) * (1+kl_bonus/100))
-        player_dmg = max(1, boss_info["sat_thuong"]//4 - nv['phong_thu'])
+        cs = chi_so_chien_dau(nv)
+        base_atk = cs["tan_cong"] + atk_bonus
+        crit = 1.8 if random.randint(1, 100) <= cs["crit"] else 1.0
+        dmg = int(random.randint(base_atk*3, base_atk*10) * (1+kl_bonus/100) * crit)
+        player_dmg = max(1, boss_info["sat_thuong"]//4 - cs["phong_thu"])
 
         new_hp = max(0, hp_hien - dmg)
 
@@ -1879,6 +2038,7 @@ async def boss_the_gioi_cmd(ctx, hanh_dong: str = None):
         color = 0xFFD700 if killed else 0xFF6600
         msg = (
             f"💥 Gây **{dmg:,}** sát thương!\n"
+            f"{'💥 Chí mạng từ trang bị!\n' if crit > 1 else ''}"
             f"🛡️ Boss phản đòn **{player_dmg:,}** sát thương\n\n"
             f"❤️ Boss HP: **{new_hp:,}** / **{boss_info['hp']:,}**\n"
             f"{pct_bar2}\n"
@@ -2204,12 +2364,14 @@ async def thap_thu_luyen(ctx):
     cp_list = json.loads(nv['cong_phap'] or '[]')
     atk_bonus = sum(CONG_PHAP_TAN_CONG.get(cp,{}).get('sat_thuong',0) for cp in cp_list)
     kl_bonus = KIEM_LINH_BONUS[min(nv['kiem_linh_cap'],len(KIEM_LINH_BONUS)-1)]
+    cs = chi_so_chien_dau(nv)
 
     p_hp = nv['linh_luc']
     e_hp = tang_hp
     for turn in range(1, 20):
-        p_atk = max(1, int((nv['tan_cong']+atk_bonus) * (1+kl_bonus/100) * random.uniform(0.8,1.2)) - tang_def)
-        e_atk = max(1, tang_atk - nv['phong_thu'])
+        crit = 1.6 if random.randint(1, 100) <= cs["crit"] else 1.0
+        p_atk = max(1, int((cs["tan_cong"]+atk_bonus) * (1+kl_bonus/100) * random.uniform(0.8,1.2) * crit) - tang_def)
+        e_atk = max(1, tang_atk - cs["phong_thu"])
         e_hp -= p_atk; p_hp -= e_atk
         if p_hp<=0 or e_hp<=0: break
 
@@ -2446,7 +2608,7 @@ async def kham_pha(ctx):
     if random.random()<0.2:
         tb = gen_trang_bi(nv['canh_gioi'])
         vp_found = tb['ten']
-        results.append(f"⚔️ Nhặt được **{tb['ten']}** (+{tb['atk']} ATK, +{tb['def']} DEF)!")
+        results.append(f"⚔️ Nhặt được **{tb['ten']}** — {tb['loai']}\n`⚔️+{tb['atk']:,} | 🛡️+{tb['def']:,} | ❤️+{tb['hp']:,} | 💥+{tb['crit']}%`")
         async with db_pool.acquire() as c:
             await c.execute("INSERT INTO tui_do(user_id,vat_pham,so_luong) VALUES($1,$2,1) ON CONFLICT(user_id,vat_pham) DO UPDATE SET so_luong=tui_do.so_luong+1",ctx.author.id,vp_found)
 
@@ -2485,13 +2647,16 @@ async def pvp(ctx, doi_thu: discord.Member):
         cp_list = json.loads(nv['cong_phap'] or '[]')
         bonus = sum(CONG_PHAP_TAN_CONG.get(cp,{}).get('sat_thuong',0) for cp in cp_list)
         kl = KIEM_LINH_BONUS[min(nv['kiem_linh_cap'],len(KIEM_LINH_BONUS)-1)]
-        return int((nv['tan_cong']+bonus)*(1+kl/100))
+        cs = chi_so_chien_dau(nv)
+        crit = 1.6 if random.randint(1, 100) <= cs["crit"] else 1.0
+        return int((cs["tan_cong"]+bonus)*(1+kl/100)*crit)
 
     hp1,hp2=nv1['linh_luc'],nv2['linh_luc']
+    cs1, cs2 = chi_so_chien_dau(nv1), chi_so_chien_dau(nv2)
     rounds=[]
     for i in range(1,15):
-        a1=max(1,int(random.uniform(0.8,1.2)*get_atk(nv1))-nv2['phong_thu'])
-        a2=max(1,int(random.uniform(0.8,1.2)*get_atk(nv2))-nv1['phong_thu'])
+        a1=max(1,int(random.uniform(0.8,1.2)*get_atk(nv1))-cs2["phong_thu"])
+        a2=max(1,int(random.uniform(0.8,1.2)*get_atk(nv2))-cs1["phong_thu"])
         hp2-=a1;hp1-=a2
         if i<=3: rounds.append(f"Lượt {i}: {nv1['ten']} -{a1:,} | {nv2['ten']} -{a2:,}")
         if hp1<=0 or hp2<=0: break
@@ -2537,23 +2702,60 @@ async def mac_trang_bi(ctx, *, ten_tb: str):
     nv = await get_nv(ctx.author.id)
     if not nv:
         await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
-    async with db_pool.acquire() as c:
-        item = await c.fetchrow("SELECT * FROM tui_do WHERE user_id=$1 AND vat_pham=$2", ctx.author.id, ten_tb)
-    if not item:
-        await ctx.send(embed=embed_mau("❌","Không có trang bị này trong túi!",0xFF4444)); return
+    loai = xac_dinh_loai_trang_bi(ten_tb)
+    if not loai:
+        await ctx.send(embed=embed_mau("❌","Vật phẩm này không phải trang bị hợp lệ.",0xFF4444)); return
 
-    # Parse trang bị từ tên (đơn giản: +atk nếu có "Kiếm/Đao/Thương")
     trang_bi_hien = json.loads(nv['trang_bi'] or '{}')
-    # Xác định loại từ tên
-    loai = "Vũ Khí"
-    for lt in LOAI_TRANG_BI:
-        for t in TRANG_BI_TEN.get(lt,[]):
-            if t.lower() in ten_tb.lower():
-                loai = lt; break
-
+    if trang_bi_hien.get(loai) == ten_tb:
+        await ctx.send(embed=embed_mau("🎽 Đang Trang Bị",f"Bạn đang mặc **{ten_tb}** ở ô **{loai}** rồi.",0x888888)); return
+    do_cu = trang_bi_hien.get(loai)
     trang_bi_hien[loai] = ten_tb
-    await cap_nhat(ctx.author.id, trang_bi=json.dumps(trang_bi_hien, ensure_ascii=False))
-    await ctx.send(embed=embed_mau("🎽 Mặc Trang Bị", f"Đã trang bị **{ten_tb}** vào ô **{loai}**!", 0x55FFAA))
+    async with db_pool.acquire() as c:
+        async with c.transaction():
+            item = await c.fetchrow("SELECT so_luong FROM tui_do WHERE user_id=$1 AND vat_pham=$2 FOR UPDATE", ctx.author.id, ten_tb)
+            if not item or item['so_luong'] < 1:
+                await ctx.send(embed=embed_mau("❌","Không có trang bị này trong túi!",0xFF4444)); return
+            if item['so_luong'] <= 1:
+                await c.execute("DELETE FROM tui_do WHERE user_id=$1 AND vat_pham=$2", ctx.author.id, ten_tb)
+            else:
+                await c.execute("UPDATE tui_do SET so_luong=so_luong-1 WHERE user_id=$1 AND vat_pham=$2", ctx.author.id, ten_tb)
+            if do_cu:
+                await c.execute("""
+                    INSERT INTO tui_do(user_id,vat_pham,so_luong) VALUES($1,$2,1)
+                    ON CONFLICT(user_id,vat_pham) DO UPDATE SET so_luong=tui_do.so_luong+1
+                """, ctx.author.id, do_cu)
+            await c.execute("UPDATE nhanvat SET trang_bi=$2 WHERE user_id=$1", ctx.author.id, json.dumps(trang_bi_hien, ensure_ascii=False))
+    await ctx.send(embed=embed_mau(
+        "🎽 Mặc Trang Bị",
+        f"Đã trang bị **{ten_tb}** vào ô **{loai}**!\n{mo_ta_chi_so_trang_bi(ten_tb, loai)}" +
+        (f"\n↩️ Đồ cũ **{do_cu}** đã trả về túi." if do_cu else ""),
+        0x55FFAA
+    ))
+
+@bot.command(name="thao", aliases=["unequip"])
+async def thao_trang_bi(ctx, *, loai: str = None):
+    """!thao <slot> — Tháo trang bị và trả về túi"""
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    tb = json.loads(nv['trang_bi'] or '{}')
+    if not tb:
+        await ctx.send(embed=embed_mau("👕 Chưa Có Trang Bị","Bạn chưa mặc trang bị nào.",0x888888)); return
+    if not loai:
+        await ctx.send(embed=embed_mau("🎽 Trang Bị Đang Mặc","Dùng `!thao <slot>`:\n" + "\n".join(f"• {k}: **{v}**" for k,v in tb.items()),0x55AAFF)); return
+    loai_match = next((x for x in tb.keys() if x.lower() == loai.lower()), None)
+    if not loai_match:
+        await ctx.send(embed=embed_mau("❌","Không có trang bị ở slot này.",0xFF4444)); return
+    ten_cu = tb.pop(loai_match)
+    async with db_pool.acquire() as c:
+        async with c.transaction():
+            await c.execute("UPDATE nhanvat SET trang_bi=$2 WHERE user_id=$1", ctx.author.id, json.dumps(tb, ensure_ascii=False))
+            await c.execute("""
+                INSERT INTO tui_do(user_id,vat_pham,so_luong) VALUES($1,$2,1)
+                ON CONFLICT(user_id,vat_pham) DO UPDATE SET so_luong=tui_do.so_luong+1
+            """, ctx.author.id, ten_cu)
+    await ctx.send(embed=embed_mau("✅ Đã Tháo Trang Bị",f"Đã tháo **{ten_cu}** khỏi ô **{loai_match}** và trả về túi.",0x55FFAA))
 
 @bot.command(name="trangbi", aliases=["tb","gear"])
 async def xem_trang_bi(ctx, member: discord.Member = None):
@@ -2565,8 +2767,52 @@ async def xem_trang_bi(ctx, member: discord.Member = None):
     tb = json.loads(nv['trang_bi'] or '{}')
     if not tb:
         await ctx.send(embed=embed_mau("👕 Chưa Có Trang Bị","Tìm trang bị bằng `!khampha`!")); return
-    lines = [f"**{loai}:** {ten}" for loai,ten in tb.items()]
+    lines = [f"**{loai}:** {ten}\n`{mo_ta_chi_so_trang_bi(ten, loai)}`" for loai,ten in tb.items()]
+    bonus = tong_bonus_trang_bi(tb)
+    lines.append(f"\n📊 **Tổng Bonus:** ⚔️+{bonus['atk']:,} | 🛡️+{bonus['def']:,} | ❤️+{bonus['hp']:,} | 💥+{bonus['crit']}%")
     await ctx.send(embed=embed_mau(f"🎽 Trang Bị — {nv['ten']}", "\n".join(lines)))
+
+@bot.command(name="ren", aliases=["forge","luyenkhi"])
+async def ren_trang_bi(ctx, *, loai: str = None):
+    """!ren [slot] — Rèn trang bị ngẫu nhiên hoặc theo slot"""
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if loai and loai.lower() in ["list","ds","slot"]:
+        await ctx.send(embed=embed_mau("⚒️ Lò Rèn Trang Bị",
+            "Slot có thể rèn:\n" + ", ".join(f"`{x}`" for x in LOAI_TRANG_BI) +
+            "\n\nDùng `!ren` để rèn ngẫu nhiên hoặc `!ren Vũ Khí` để chọn slot.",0xFFAA00)); return
+    loai_chon = None
+    if loai and loai.lower() not in ["random","ngẫu nhiên","ngau nhien"]:
+        loai_chon = next((x for x in LOAI_TRANG_BI if x.lower() == loai.lower()), None)
+        if not loai_chon:
+            await ctx.send(embed=embed_mau("❌","Slot không tồn tại. Dùng `!ren list` để xem danh sách.",0xFF4444)); return
+    phi = 500 + nv['canh_gioi'] * 450
+    if loai_chon:
+        phi = int(phi * 1.2)
+    cap_bonus = 0
+    if nv.get('dao_phu') == "Cơ Khí Đạo":
+        phi = int(phi * 0.85)
+        cap_bonus = 2
+    if nv['linh_thach'] < phi:
+        await ctx.send(embed=embed_mau("❌",f"Cần **{phi:,}** 💎 để rèn.",0xFF4444)); return
+    tb = gen_trang_bi(nv['canh_gioi'] + cap_bonus, loai_chon)
+    async with db_pool.acquire() as c:
+        await c.execute("""
+            INSERT INTO tui_do(user_id,vat_pham,so_luong) VALUES($1,$2,1)
+            ON CONFLICT(user_id,vat_pham) DO UPDATE SET so_luong=tui_do.so_luong+1
+        """, ctx.author.id, tb["ten"])
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-phi)
+    await cap_nhat_tk(ctx.author.id, tong_lt_tieu=phi)
+    await ctx.send(embed=embed_mau(
+        "⚒️ Rèn Thành Công",
+        f"Nhận được **{tb['ten']}**\n"
+        f"Slot: **{tb['loai']}** | Phẩm: **{PHAM_CHAT[tb['pham_chat']]}**\n"
+        f"⚔️ +{tb['atk']:,} | 🛡️ +{tb['def']:,} | ❤️ +{tb['hp']:,} | 💥 +{tb['crit']}%\n"
+        f"💎 Chi phí: **{phi:,}**\n\n"
+        f"Dùng `!mac {tb['ten']}` để mặc.",
+        0xFFAA00
+    ))
 
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: CỬA HÀNG
@@ -2577,6 +2823,27 @@ async def shop(ctx, trang: str = None, *, ten: str = None):
     nv = await get_nv(ctx.author.id)
     if not nv and trang=="mua":
         await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+
+    if trang in ["trangbi","tb","gear"]:
+        if not nv:
+            await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+        phi_random = 500 + nv['canh_gioi'] * 450
+        phi_slot = int(phi_random * 1.2)
+        if nv.get('dao_phu') == "Cơ Khí Đạo":
+            phi_random = int(phi_random * 0.85)
+            phi_slot = int(phi_slot * 0.85)
+        slot_lines = [f"`{x}`" for x in LOAI_TRANG_BI]
+        pages = [
+            ("⚒️ Cửa Hàng Trang Bị", 
+             f"`!ren` — Rèn ngẫu nhiên: **{phi_random:,}💎**\n"
+             f"`!ren <slot>` — Rèn theo slot: **{phi_slot:,}💎**\n"
+             f"`!mac <tên>` — Mặc trang bị\n"
+             f"`!thao <slot>` — Tháo trang bị\n\n"
+             f"Cơ Khí Đạo được giảm giá và tăng nhẹ phẩm rèn."),
+            ("⚒️ Slot Có Thể Rèn", ", ".join(slot_lines))
+        ]
+        await paginate(ctx, pages)
+        return
 
     if trang=="dan" or not trang:
         icon_map={"hoi_phuc":"💧","tu_vi":"✨","dot_pha":"🔮","do_kiep":"⚡","buff_atk":"⚔️","buff_def":"🛡️","buff_hp":"💧","buff_all":"⭐"}
@@ -2619,9 +2886,15 @@ async def tui_do(ctx):
         await ctx.send(embed=embed_mau("🎒 Trống","Dùng `!khampha` để tìm vật phẩm!",0x888888)); return
     lines=[]
     for it in items:
-        dan = DAN_DUOC.get(it['vat_pham'],{})
-        icon = dan.get('rare','📦')
-        lines.append(f"{icon} **{it['vat_pham']}** x{it['so_luong']}")
+        ten = it['vat_pham']
+        loai_tb = xac_dinh_loai_trang_bi(ten)
+        if loai_tb:
+            pham = xac_dinh_pham_trang_bi(ten)
+            icon = PHAM_CHAT_ICON[pham]
+        else:
+            dan = DAN_DUOC.get(ten,{})
+            icon = dan.get('rare','📦')
+        lines.append(f"{icon} **{ten}** x{it['so_luong']}")
     chunk = 15
     td_pages = [
         (f"🎒 Túi Đồ — {nv['ten']} ({i//chunk+1}/{(len(lines)-1)//chunk+1})", "\n".join(lines[i:i+chunk]))
@@ -2663,10 +2936,10 @@ async def hanh_trang(ctx, member: discord.Member = None):
         sl  = it['so_luong']
         khoa = "🔒" if sl <= 0 else ""
 
-        # Trang bị (có phẩm chất icon)
-        is_tb = any(pc in ten for pc in PHAM_CHAT)
-        if is_tb:
-            trang_bi_lines.append(f"⚔️ **{ten}** {'(khóa)' if khoa else '(không khóa)'} — Số lượng: {sl}")
+        # Trang bị
+        loai_tb = xac_dinh_loai_trang_bi(ten)
+        if loai_tb:
+            trang_bi_lines.append(f"⚔️ **{ten}** — {loai_tb} — `{mo_ta_chi_so_trang_bi(ten, loai_tb)}` — SL: {sl}")
             continue
 
         # Đan dược / vật phẩm sử dụng
@@ -3067,7 +3340,7 @@ async def mua_can_cau(ctx, *, ten_can: str = None):
 @bot.command(name="bxh", aliases=["rank"])
 async def bang_xep_hang(ctx):
     async with db_pool.acquire() as c:
-        rows = await c.fetch("SELECT ten,toc,canh_gioi,tu_vi,tan_cong,phong_thu,linh_luc_max FROM nhanvat ORDER BY canh_gioi DESC,tu_vi DESC LIMIT 10")
+        rows = await c.fetch("SELECT ten,toc,canh_gioi,tu_vi,tan_cong,phong_thu,linh_luc_max,trang_bi FROM nhanvat ORDER BY canh_gioi DESC,tu_vi DESC LIMIT 10")
     medals=["🥇","🥈","🥉"]+["🏅"]*7
     lines=[]
     for i,r in enumerate(rows):
@@ -3148,6 +3421,33 @@ async def thanh_tich_cmd(ctx, member: discord.Member = None):
     ]
     await paginate(ctx, tt_pages)
 
+IDEA_NANG_CAP = [
+    "🎽 Set trang bị: đủ 2/4/6 món cùng phẩm sẽ mở hiệu ứng riêng.",
+    "⚒️ Cường hóa + tinh luyện: nâng +1 → +15, thất bại có bảo hộ.",
+    "🧿 Khảm ngọc: gắn Linh Châu vào vũ khí/giáp để thêm crit, hút máu, né tránh.",
+    "🗺️ Bí cảnh tổ đội: 2-5 người đi phó bản, chia loot theo đóng góp.",
+    "🏯 Tông môn chiến: chiếm linh mạch theo tuần, nhận thuế linh thạch.",
+    "🏪 Chợ người chơi: rao bán trang bị/đan dược, bot thu phí giao dịch.",
+    "📜 Nhiệm vụ ngày/tuần: chuỗi tu luyện, đánh boss, câu cá, trồng cây.",
+    "⚡ Thiên kiếp động: khi đột phá cao sẽ có mini boss thiên kiếp.",
+    "🐾 Linh thú phái đi: gửi pet đi thám hiểm vài giờ để mang vật phẩm về.",
+    "🌌 Sự kiện giờ vàng: tăng drop/rèn/tu vi theo khung giờ server.",
+    "👑 Boss liên server mùa: reset theo mùa, bảng damage có danh hiệu.",
+    "☯️ Nhánh đạo chuyên sâu: Kiếm Đạo/Đan Đạo/Cơ Khí Đạo có kỹ năng riêng.",
+    "🎣 Câu cá boss: câu được dị thú biển, cả server cùng săn.",
+    "📦 Rương loot phẩm chất: rương boss có tỉ lệ mở ra pháp bảo hiếm.",
+    "🏅 Mùa giải PvP: rank theo tháng, reset và phát danh hiệu.",
+]
+
+@bot.command(name="ideas", aliases=["idea","goiy","gợiý"])
+async def ideas_cmd(ctx):
+    chunk = 5
+    pages = [
+        (f"💡 Ý Tưởng Nâng Cấp Bot ({i//chunk+1}/{(len(IDEA_NANG_CAP)-1)//chunk+1})", "\n".join(IDEA_NANG_CAP[i:i+chunk]))
+        for i in range(0, len(IDEA_NANG_CAP), chunk)
+    ]
+    await paginate(ctx, pages)
+
 # ══════════════════════════════════════════════════════════════
 #  LỆNH: HELP (pagination 1 tin nhắn, dùng reaction ◀ ▶)
 # ══════════════════════════════════════════════════════════════
@@ -3195,10 +3495,13 @@ HELP_PAGES = [
 `!tuido` — Xem túi đồ
 `!trangbi` — Xem trang bị đang mặc
 `!mac <tên trang bị>` — Mặc trang bị
+`!thao <slot>` — Tháo trang bị
+`!ren [slot]` — Rèn trang bị mới
 `!dung <tên>` — Dùng đan dược
 
 **🏪 Cửa Hàng**
 `!shop` — Xem đan dược
+`!shop trangbi` — Xem lò rèn/trang bị
 `!shop mua <tên>` — Mua vật phẩm
 
 **📊 Lịch Sử**
@@ -3223,6 +3526,7 @@ HELP_PAGES = [
 *Phi thăng tự động khi đủ cảnh giới!*
 
 **🐉 Tộc:** Long, Thần, Nhân, Tiên, Ma, Thú
+`!ideas` — Xem gợi ý nâng cấp tiếp theo
 **36 Cảnh Giới** từ Phàm Nhân → Vô Thượng Đại Đạo
 """),
 ]
