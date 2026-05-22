@@ -8,7 +8,7 @@
 """
 import discord
 from discord.ext import commands, tasks
-import asyncpg, random, asyncio, os, json, math
+import asyncpg, random, asyncio, os, json, math, re
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote_plus
 
@@ -455,6 +455,83 @@ TRANG_BI_TEN = {
     ],
 }
 
+TRANG_BI_TEN_MO_RONG = {
+    "Vũ Khí": [
+        "Thanh Vân Kiếm","Xích Tiêu Kiếm","Trảm Yêu Kiếm","Vô Ảnh Kiếm","Cửu Kiếp Kiếm",
+        "Huyền Thiết Đao","Phá Quân Đao","Tu La Huyết Đao","Long Tượng Chùy","Diệt Hồn Trượng",
+        "Thiên Cơ Phiến","Ngũ Hành Pháp Trượng","Càn Khôn Thương","Bá Vương Kích","Tinh Vẫn Cung",
+        "Huyết Nguyệt Luân","Lôi Đình Song Kiếm","Thái Âm Băng Kích","Đại Nhật Hỏa Thương","Đạo Tâm Kiếm"
+    ],
+    "Giáp": [
+        "Thanh Mộc Linh Giáp","Huyền Quy Trọng Giáp","Lôi Văn Chiến Giáp","Xích Diễm Thần Giáp",
+        "Băng Phách Bảo Giáp","U Minh Huyết Giáp","Thiên Cơ Hộ Giáp","Vạn Pháp Đạo Giáp",
+        "Long Hồn Chiến Giáp","Tinh Hà Hộ Thể Giáp","Cửu Chuyển Kim Giáp","Đại Hoang Thần Giáp"
+    ],
+    "Mũ": [
+        "Thanh Liên Đạo Quan","Huyền Tâm Quan","Lôi Đình Kim Quan","Hỏa Vân Miện","Băng Tâm Ngọc Quan",
+        "Cửu U Ma Quan","Tinh Hà Pháp Miện","Đạo Tổ Huyền Quan","Hồng Mông Thiên Quan"
+    ],
+    "Nhẫn": [
+        "Nhẫn Thanh Mộc","Nhẫn Huyết Sát","Nhẫn Lôi Văn","Nhẫn Hỏa Vân","Nhẫn Băng Phách",
+        "Nhẫn Thiên Cơ","Nhẫn Vạn Pháp","Nhẫn Cửu Kiếp","Nhẫn Đạo Tâm","Nhẫn Luân Hồi"
+    ],
+    "Vòng Tay": [
+        "Vòng Tay Thanh Liên","Vòng Tay Huyền Quy","Vòng Tay Huyết Nguyệt","Vòng Tay Lôi Đình",
+        "Vòng Tay Càn Khôn","Vòng Tay Thiên Cơ","Vòng Tay Đạo Tâm","Vòng Tay Luân Hồi"
+    ],
+    "Đai Lưng": [
+        "Đai Lưng Thanh Vân","Đai Lưng Huyết Sát","Đai Lưng Lôi Văn","Đai Lưng Hỏa Vân",
+        "Đai Lưng Băng Phách","Đai Lưng Thiên Mệnh","Đai Lưng Hồng Hoang","Đai Lưng Đại Đạo"
+    ],
+    "Hài": [
+        "Hài Thanh Phong","Hài Lôi Bộ","Hài Hỏa Vân","Hài Băng Ảnh","Hài Hư Linh",
+        "Hài Thiên Cơ","Hài Càn Khôn Bộ","Hài Luân Hồi Bộ","Hài Đạp Thiên"
+    ],
+    "Áo Choàng": [
+        "Áo Choàng Thanh Vân","Áo Choàng Huyết Nguyệt","Áo Choàng Lôi Đình","Áo Choàng Băng Phách",
+        "Áo Choàng Thiên Cơ","Áo Choàng Cửu U","Áo Choàng Vạn Pháp","Áo Choàng Đại Đạo"
+    ],
+    "Dây Chuyền": [
+        "Dây Chuyền Thanh Tâm","Dây Chuyền Huyết Ngọc","Dây Chuyền Lôi Hồn","Dây Chuyền Hỏa Phách",
+        "Dây Chuyền Băng Tâm","Dây Chuyền Thiên Cơ","Dây Chuyền Đạo Tâm","Dây Chuyền Luân Hồi"
+    ],
+    "Ngọc Bội": [
+        "Ngọc Bội Thanh Liên","Ngọc Bội Huyết Sát","Ngọc Bội Lôi Văn","Ngọc Bội Hỏa Vân",
+        "Ngọc Bội Băng Phách","Ngọc Bội Thiên Cơ","Ngọc Bội Càn Khôn","Ngọc Bội Đại Đạo"
+    ],
+    "Pháp Bảo": [
+        "Thanh Liên Bảo Đăng","Huyết Hải Ma Phiên","Lôi Đình Bảo Kính","Hỏa Vân Thần Lô",
+        "Băng Phách Huyền Châu","Thiên Cơ La Bàn","Cửu U Trấn Hồn Phiên","Vạn Pháp Quy Nguyên Đồ",
+        "Luân Hồi Bảo Luân","Đại Đạo Kim Liên","Hồng Mông Tạo Hóa Đỉnh","Vô Cực Đạo Tháp"
+    ],
+    "Ấn": [
+        "Ấn Thanh Mộc","Ấn Huyết Sát","Ấn Lôi Đình","Ấn Hỏa Vân","Ấn Băng Phách",
+        "Ấn Thiên Cơ","Ấn Càn Khôn","Ấn Luân Hồi","Ấn Đại Đạo"
+    ],
+    "Cánh": [
+        "Cánh Thanh Loan","Cánh Huyết Dực","Cánh Lôi Bằng","Cánh Hỏa Phượng","Cánh Băng Hoàng",
+        "Cánh Hư Không","Cánh Thiên Cơ","Cánh Luân Hồi","Cánh Đại Đạo"
+    ],
+    "Hộ Phù": [
+        "Hộ Phù Thanh Tâm","Hộ Phù Huyết Mạch","Hộ Phù Lôi Kiếp","Hộ Phù Hỏa Vân",
+        "Hộ Phù Băng Phách","Hộ Phù Thiên Cơ","Hộ Phù Càn Khôn","Hộ Phù Luân Hồi"
+    ],
+    "Lệnh Bài": [
+        "Lệnh Bài Thanh Vân","Lệnh Bài Huyết Sát","Lệnh Bài Lôi Phạt","Lệnh Bài Hỏa Vân",
+        "Lệnh Bài Thiên Cơ","Lệnh Bài Hồng Hoang","Lệnh Bài Luân Hồi","Lệnh Bài Đại Đạo"
+    ],
+    "Linh Châu": [
+        "Linh Châu Kim","Linh Châu Phong","Linh Châu Băng","Linh Châu Quang Minh","Linh Châu Hắc Ám",
+        "Linh Châu Sinh Mệnh","Linh Châu Hủy Diệt","Linh Châu Thời Không","Linh Châu Luân Hồi"
+    ],
+}
+
+for _loai, _ten_list in TRANG_BI_TEN_MO_RONG.items():
+    TRANG_BI_TEN.setdefault(_loai, [])
+    for _ten in _ten_list:
+        if _ten not in TRANG_BI_TEN[_loai]:
+            TRANG_BI_TEN[_loai].append(_ten)
+
 GEAR_SLOT_PROFILE = {
     "Vũ Khí":     {"atk":14, "def":2,  "hp":0,   "crit":4},
     "Giáp":       {"atk":2,  "def":14, "hp":90,  "crit":0},
@@ -697,6 +774,124 @@ DAN_DUOC.update({
     "Phá Giới Đan":       {"loai":"dot_pha", "ti_le":50,    "gia":50_000,      "cap_yeu":5,  "rare":"🔵"},
     "Khai Thiên Phù":     {"loai":"tu_vi",   "exp":10_000_000,"gia":5_000_000_000,"cap_yeu":30,"rare":"☀️"},
 })
+
+DAN_DUOC.update({
+    # Boss drop / hồi phục cao cấp
+    "Yêu Đan Sơ Phẩm":        {"loai":"tu_vi", "exp":1_500,        "gia":2_500,        "cap_yeu":0,  "rare":"🟢"},
+    "Yêu Đan Trung Phẩm":     {"loai":"tu_vi", "exp":9_000,        "gia":18_000,       "cap_yeu":4,  "rare":"🔵"},
+    "Yêu Đan Thượng Phẩm":    {"loai":"tu_vi", "exp":50_000,       "gia":120_000,      "cap_yeu":8,  "rare":"🟣"},
+    "Yêu Đan Cực Phẩm":       {"loai":"tu_vi", "exp":250_000,      "gia":800_000,      "cap_yeu":12, "rare":"🟡"},
+    "Tinh Hà Ngộ Đạo Đan":    {"loai":"tu_vi", "exp":1_200_000,    "gia":4_000_000,    "cap_yeu":18, "rare":"⭐"},
+    "Hồng Mông Đạo Đan":      {"loai":"tu_vi", "exp":10_000_000,   "gia":80_000_000,   "cap_yeu":30, "rare":"🌈"},
+    "Vô Thượng Chứng Đạo Đan":{"loai":"tu_vi", "exp":100_000_000,  "gia":1_500_000_000,"cap_yeu":65, "rare":"☀️"},
+    "Hồi Mệnh Đan":           {"loai":"hoi_phuc", "hp":8_000,      "gia":40_000,       "cap_yeu":12, "rare":"🟣"},
+    "Cửu Dương Hồi Thiên Đan":{"loai":"hoi_phuc", "hp":50_000,     "gia":300_000,      "cap_yeu":20, "rare":"🟡"},
+    "Bất Diệt Sinh Cơ Đan":   {"loai":"hoi_phuc", "hp":500_000,    "gia":5_000_000,    "cap_yeu":35, "rare":"⭐"},
+    "Vô Thượng Hoàn Hồn Đan": {"loai":"hoi_phuc", "hp":5_000_000,  "gia":200_000_000,  "cap_yeu":60, "rare":"☀️"},
+    # Đột phá / độ kiếp
+    "Kim Đan Phá Chướng Đan": {"loai":"dot_pha", "ti_le":20,       "gia":6_000,        "cap_yeu":2,  "rare":"🟢"},
+    "Ngộ Đạo Phá Hư Đan":     {"loai":"dot_pha", "ti_le":75,       "gia":60_000,       "cap_yeu":10, "rare":"🟣"},
+    "Thiên Mệnh Phá Cảnh Đan":{"loai":"dot_pha", "ti_le":90,       "gia":2_000_000,    "cap_yeu":20, "rare":"⭐"},
+    "Hồng Mông Phá Đạo Đan":  {"loai":"dot_pha", "ti_le":120,      "gia":150_000_000,  "cap_yeu":45, "rare":"🌈"},
+    "Lôi Kiếp Hộ Mạch Đan":   {"loai":"do_kiep", "giam_kien":35,   "gia":25_000,       "cap_yeu":8,  "rare":"🔵"},
+    "Cửu Chuyển Độ Ách Đan":  {"loai":"do_kiep", "giam_kien":70,   "gia":2_500_000,    "cap_yeu":18, "rare":"⭐"},
+    "Hỗn Độn Tị Kiếp Đan":    {"loai":"do_kiep", "giam_kien":95,   "gia":120_000_000,  "cap_yeu":40, "rare":"🌈"},
+    # Buff vĩnh viễn
+    "Long Tượng Lực Đan":     {"loai":"buff_atk", "atk":20,        "gia":80_000,       "cap_yeu":8,  "rare":"🟣"},
+    "Kiếm Tâm Đan":           {"loai":"buff_atk", "atk":80,        "gia":2_000_000,    "cap_yeu":18, "rare":"⭐"},
+    "Huyền Vũ Hộ Thể Đan":    {"loai":"buff_def", "def":25,        "gia":90_000,       "cap_yeu":8,  "rare":"🟣"},
+    "Bất Động Kim Thân Đan":  {"loai":"buff_def", "def":100,       "gia":3_000_000,    "cap_yeu":22, "rare":"⭐"},
+    "Bất Tử Huyết Đan":       {"loai":"buff_hp",  "hp_max":1_000,  "gia":150_000,      "cap_yeu":10, "rare":"🟣"},
+    "Thái Cổ Huyết Mạch Đan": {"loai":"buff_hp",  "hp_max":10_000, "gia":10_000_000,   "cap_yeu":30, "rare":"🌈"},
+    "Tam Hoa Tụ Đỉnh Đan":    {"loai":"buff_all", "all":120,       "gia":800_000_000,  "cap_yeu":35, "rare":"🌈"},
+    "Đại Đạo Kim Đan":        {"loai":"buff_all", "all":300,       "gia":8_000_000_000,"cap_yeu":60, "rare":"☀️"},
+    # Tiện ích mới
+    "Thanh Tâm Đan":          {"loai":"hoi_mana", "mana":50,       "gia":5_000,        "cap_yeu":0,  "rare":"🟢"},
+    "Thiên Hà Hồi Mana Đan":  {"loai":"hoi_mana", "mana":250,      "gia":80_000,       "cap_yeu":10, "rare":"🟣"},
+    "Tĩnh Tâm Đan":           {"loai":"giam_tam_ma","tam_ma":10,    "gia":20_000,       "cap_yeu":5,  "rare":"🔵"},
+    "Vô Cấu Đạo Tâm Đan":     {"loai":"giam_tam_ma","tam_ma":50,    "gia":2_000_000,    "cap_yeu":20, "rare":"⭐"},
+    "Trường Sinh Đan":        {"loai":"tho_nguyen","tho_nguyen":50, "gia":5_000_000,    "cap_yeu":15, "rare":"⭐"},
+    "Luyện Khí Tinh Đan":     {"loai":"tinh_thiet","tinh_thiet":300,"gia":200_000,     "cap_yeu":8,  "rare":"🟣"},
+    "Hạo Nhiên Công Đức Đan": {"loai":"cong_duc", "cong_duc":500,  "gia":500_000,      "cap_yeu":10, "rare":"🟡"},
+})
+
+BOSS_LOOT_SLOT_UU_TIEN = ["Vũ Khí","Giáp","Pháp Bảo","Ấn","Linh Châu","Nhẫn","Hộ Phù","Áo Choàng","Cánh"]
+BOSS_LOOT_DAN_LOAI = {"tu_vi", "hoi_phuc", "dot_pha", "do_kiep", "buff_atk", "buff_def", "buff_hp", "buff_all", "hoi_mana", "giam_tam_ma"}
+
+def chon_dan_boss(cap_yeu: int, boost: int = 0) -> str:
+    muc_cap = max(0, cap_yeu + boost + random.randint(0, 3))
+    pool = [
+        (ten, info) for ten, info in DAN_DUOC.items()
+        if info.get("loai") in BOSS_LOOT_DAN_LOAI and info.get("cap_yeu", 0) <= muc_cap
+    ]
+    if not pool:
+        return "Hồi Linh Đan"
+    pool = sorted(pool, key=lambda x: x[1].get("cap_yeu", 0))[-18:]
+    weights = [max(1, 4 + info.get("cap_yeu", 0) + boost) for _, info in pool]
+    return random.choices([ten for ten, _ in pool], weights=weights, k=1)[0]
+
+def gen_trang_bi_boss(boss_info: dict, cap_yeu: int, *, world: bool = False, rank: int = None) -> dict:
+    bonus = 4 if world else 2
+    if rank == 1:
+        bonus += 4
+    elif rank and rank <= 3:
+        bonus += 3
+    elif rank and rank <= 10:
+        bonus += 2
+    loai = random.choice(BOSS_LOOT_SLOT_UU_TIEN)
+    tb = gen_trang_bi(cap_yeu + bonus, loai)
+    boss_ten = re.sub(r"[^\wÀ-ỹ\s]", "", (boss_info or {}).get("ten", "Boss")).strip()
+    boss_words = [w for w in boss_ten.split() if len(w) >= 2]
+    dau_an = " ".join(boss_words[-2:]) if len(boss_words) >= 2 else (boss_words[0] if boss_words else "Boss")
+    phong_an = random.choice(["Chiến Lợi", "Hồn Ấn", "Di Cốt", "Huyết Ấn", "Tàn Linh", "Bí Tàng"])
+    base = random.choice(TRANG_BI_TEN.get(loai, [tb["ten"]]))
+    pham = tb["pham_chat"]
+    ten = f"{PHAM_CHAT_ICON[pham]}{PHAM_CHAT[pham]} {phong_an} {dau_an} {base}"
+    st = chi_so_trang_bi(ten, loai)
+    return {
+        "ten": ten, "loai": loai, "pham_chat": pham,
+        "atk": st["atk"], "def": st["def"], "hp": st["hp"], "crit": st["crit"],
+        "gia_ban": tb["gia_ban"] * (2 if world else 1)
+    }
+
+def tao_loot_boss(nv, boss_info: dict, *, world: bool = False, rank: int = None, damage_pct: float = 0) -> list[str]:
+    try:
+        nv_cap = int(nv["canh_gioi"] or 0)
+    except Exception:
+        nv_cap = 0
+    cap = max(nv_cap, int((boss_info or {}).get("cap_yeu", 0) or 0))
+    loot = [chon_dan_boss(cap, 2 if world else 0)]
+    if world and damage_pct >= 5:
+        loot.append(chon_dan_boss(cap, 4))
+
+    gear_chance = 0.42 if not world else 0.22
+    if world:
+        if rank == 1:
+            gear_chance = 1.00
+        elif rank and rank <= 3:
+            gear_chance = 0.85
+        elif rank and rank <= 10:
+            gear_chance = 0.60
+        gear_chance += min(0.20, damage_pct / 100)
+    else:
+        gear_chance += min(0.20, cap / 120)
+
+    if random.random() < min(1.0, gear_chance):
+        loot.append(gen_trang_bi_boss(boss_info, cap, world=world, rank=rank)["ten"])
+    if random.random() < (0.18 if world else 0.08):
+        loot.append(random.choice(TRANG_BI_TEN["Linh Châu"]))
+    return loot
+
+async def phat_loot_boss(uid: int, nv, boss_info: dict, *, world: bool = False, rank: int = None, damage_pct: float = 0, conn=None) -> list[str]:
+    loot = tao_loot_boss(nv, boss_info, world=world, rank=rank, damage_pct=damage_pct)
+    for vat_pham in loot:
+        await them_vat_pham(uid, vat_pham, 1, conn=conn)
+    return loot
+
+def format_loot_lines(items: list[str]) -> str:
+    if not items:
+        return "Không rớt thêm vật phẩm."
+    return "\n".join(f"🎁 **{item}** x1" for item in items)
 
 # ══════════════════════════════════════════════════════════════
 #  HOẠT ĐỘNG MỚI: NHIỆM VỤ, BÍ CẢNH, GIỜ VÀNG
@@ -2105,7 +2300,7 @@ async def danh_boss(ctx, so_boss: int = None):
         lines = []
         for idx, b in boss_trong_gioi[:10]:
             lock = "🔒" if nv['canh_gioi']<b['cap_yeu'] else "⚔️"
-            lines.append(f"{lock} **{idx}. {b['ten']}** HP:{b['hp']:,} | Cần Lv.{b['cap_yeu']} | 💎{b['phan_thuong']:,}")
+            lines.append(f"{lock} **{idx}. {b['ten']}** HP:{b['hp']:,} | Cần Lv.{b['cap_yeu']} | 💎{b['phan_thuong']:,} | 📦 rớt đan/trang bị")
         await ctx.send(embed=embed_mau(f"👹 Boss — {BAN_DO[gioi_hien]['ten']}", "\n".join(lines) or "Không có boss phù hợp"))
         return
 
@@ -2139,9 +2334,14 @@ async def danh_boss(ctx, so_boss: int = None):
     if p_hp>0:
         await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+boss['phan_thuong'],
                        exp=nv['exp']+boss['exp'], linh_luc=max(1,p_hp))
+        loot = await phat_loot_boss(ctx.author.id, nv, boss, world=False)
         await cap_nhat_tk(ctx.author.id, tong_boss_giet=1, tong_lt_kiem=boss['phan_thuong'], tong_exp=boss['exp'])
-        await them_nhat_ky(ctx.author.id,"boss",f"Hạ **{boss['ten']}** (+{boss['phan_thuong']:,}💎)")
-        result = "\n".join(rounds)+f"\n...\n\n🏆 **CHIẾN THẮNG!**\n💎 +{boss['phan_thuong']:,} | ✨ +{boss['exp']:,} EXP"
+        await them_nhat_ky(ctx.author.id,"boss",f"Hạ **{boss['ten']}** (+{boss['phan_thuong']:,}💎, loot {len(loot)} món)")
+        result = (
+            "\n".join(rounds)
+            + f"\n...\n\n🏆 **CHIẾN THẮNG!**\n💎 +{boss['phan_thuong']:,} | ✨ +{boss['exp']:,} EXP"
+            + f"\n\n📦 **Boss rớt đồ**\n{format_loot_lines(loot)}"
+        )
         color = 0x55FF55
     else:
         await cap_nhat(ctx.author.id, linh_luc=1, so_chet=nv['so_chet']+1)
@@ -2215,7 +2415,8 @@ async def gui_phan_thuong_boss(gioi: str, boss_info: dict, session_time):
         f"• ≥10% HP boss: Thần Nguyên Đan + 30% LT\n"
         f"• ≥5% HP boss: Tụ Nguyên Đan + 15% LT\n"
         f"• ≥1% HP boss: Hồi Linh Đan + 5% LT\n"
-        f"• <1% HP boss: 1% LT"
+        f"• <1% HP boss: 1% LT\n"
+        f"• Tất cả người tham gia: rớt đan boss; Top 10 có tỉ lệ/đảm bảo rớt trang bị"
     )
 
     result_embed = discord.Embed(
@@ -2249,6 +2450,7 @@ async def gui_phan_thuong_boss(gioi: str, boss_info: dict, session_time):
 
             dmg = row['tong_damage']
             reward = reward_by_damage(dmg)
+            damage_pct = dmg / max(total_hp, 1) * 100
 
             # Bonus top rank
             if i == 0:    bonus_lt = int(phan_thuong_co_ban * 0.5)
@@ -2272,6 +2474,7 @@ async def gui_phan_thuong_boss(gioi: str, boss_info: dict, session_time):
                 """, uid, reward["item"])
             if i <= 9:
                 await them_vat_pham(uid, "Rương Boss", 1, conn=c)
+            boss_loot = await phat_loot_boss(uid, nv, boss_info, world=True, rank=i+1, damage_pct=damage_pct, conn=c)
 
             # DM phần thưởng
             try:
@@ -2285,6 +2488,8 @@ async def gui_phan_thuong_boss(gioi: str, boss_info: dict, session_time):
                         f"{'🥇 Top #'+str(i+1)+' Bonus: +'+f'{bonus_lt:,} Linh Thạch' + chr(10) if bonus_lt else ''}"
                         f"🎁 **+{total_lt:,} Linh Thạch**\n"
                         f"{'🎁 **'+reward['item']+'** × 1'+chr(10) if reward['item'] else ''}"
+                        f"{'📦 **Rương Boss** × 1'+chr(10) if i <= 9 else ''}"
+                        f"\n**📦 Boss rớt đồ riêng**\n{format_loot_lines(boss_loot)}\n"
                         f"\n✅ **Thông báo**\n"
                         f"• Tất cả phần thưởng đã được tự động thêm vào inventory\n"
                         f"• Sử dụng lệnh `!tuido` để xem kho đồ\n"
@@ -3179,6 +3384,11 @@ async def dung_item(ctx, *, ten: str):
 
     updates = {}
     msg = f"✅ Đã dùng **{ten}**!\n"
+    def nv_val(key, default=0):
+        try:
+            return nv[key]
+        except Exception:
+            return default
 
     if dan['loai'] == 'hoi_phuc':
         new_ll = min(nv['linh_luc']+dan['hp'], nv['linh_luc_max'])
@@ -3217,6 +3427,29 @@ async def dung_item(ctx, *, ten: str):
         updates['phong_thu'] = nv['phong_thu'] + dan['all']
         updates['linh_luc_max'] = nv['linh_luc_max'] + dan['all']*5
         msg += f"⭐ Tất cả chỉ số vĩnh viễn +{dan['all']}"
+
+    elif dan['loai'] == 'hoi_mana':
+        mana_max = nv_val('mana_max', 100)
+        new_mana = min((nv_val('mana', mana_max) or 0) + dan['mana'], mana_max)
+        updates['mana'] = new_mana
+        msg += f"💙 Mana +{dan['mana']} → {new_mana:,}/{mana_max:,}"
+
+    elif dan['loai'] == 'giam_tam_ma':
+        new_tm = max(0, int(nv_val('tam_ma', 0) or 0) - dan['tam_ma'])
+        updates['tam_ma'] = new_tm
+        msg += f"🌑 Tâm ma -{dan['tam_ma']} → {new_tm}"
+
+    elif dan['loai'] == 'tho_nguyen':
+        updates['tho_nguyen'] = int(nv_val('tho_nguyen', 0) or 0) + dan['tho_nguyen']
+        msg += f"🕰️ Thọ nguyên +{dan['tho_nguyen']} năm"
+
+    elif dan['loai'] == 'tinh_thiet':
+        updates['tinh_thiet'] = int(nv_val('tinh_thiet', 0) or 0) + dan['tinh_thiet']
+        msg += f"🔩 Tinh thiết +{dan['tinh_thiet']:,}"
+
+    elif dan['loai'] == 'cong_duc':
+        updates['cong_duc'] = int(nv_val('cong_duc', 0) or 0) + dan['cong_duc']
+        msg += f"🌞 Công đức +{dan['cong_duc']:,}"
 
     if updates: await cap_nhat(ctx.author.id, **updates)
     async with db_pool.acquire() as c:
@@ -3687,7 +3920,12 @@ async def shop(ctx, trang: str = None, *, ten: str = None):
         return
 
     if trang=="dan" or not trang:
-        icon_map={"hoi_phuc":"💧","tu_vi":"✨","dot_pha":"🔮","do_kiep":"⚡","buff_atk":"⚔️","buff_def":"🛡️","buff_hp":"💧","buff_all":"⭐"}
+        icon_map={
+            "hoi_phuc":"💧","tu_vi":"✨","dot_pha":"🔮","do_kiep":"⚡",
+            "buff_atk":"⚔️","buff_def":"🛡️","buff_hp":"💧","buff_all":"⭐",
+            "hoi_mana":"💙","giam_tam_ma":"🌑","tho_nguyen":"🕰️",
+            "tinh_thiet":"🔩","cong_duc":"🌞"
+        }
         all_lines=[f"{icon_map.get(v['loai'],'💊')} **{k}** {v['rare']} — {v['gia']:,}💎 | Lv.{v.get('cap_yeu',0)}" for k,v in DAN_DUOC.items()]
         chunk = 10
         shop_pages = [
@@ -5330,11 +5568,11 @@ HELP_PAGES = [
     ("📖 Hướng Dẫn (2/4) — Chiến Đấu & Đạo", """
 **⚔️ Chiến Đấu**
 `!boss` — Xem boss bản đồ hiện tại
-`!boss <số>` — Đánh boss
+`!boss <số>` — Đánh boss, rớt đan/trang bị
 `!bossthegioi` — Xem boss thế giới + nút auto/rank
 `!bossthegioi lich` — Xem lịch spawn boss
 `!bossthegioi dangky` — Đăng ký tham chiến
-`!bossthegioi tan` — Tấn công boss thế giới
+`!bossthegioi tan` — Tấn công boss thế giới, chia loot theo damage
 `!bossthegioi bxh` — Bảng xếp hạng damage
 `!pvp @người` — Thách đấu PvP
 `!thap` — Tháp thử luyện *(60s)*
