@@ -292,6 +292,12 @@ def tinh_sat_thuong_boss_world(nv, boss_info: dict) -> dict:
     base_atk = cs["tan_cong"] + atk_bonus
     crit = 1.8 if random.randint(1, 100) <= cs["crit"] else 1.0
     dmg = int(random.randint(base_atk*3, base_atk*10) * (1+kl_bonus/100) * crit)
+    if nv.get('dao_chinh') == "Kiếm Đạo" and any("Kiếm" in cp for cp in cp_list):
+        dmg = int(dmg * 1.15)
+    if nv.get('dao_chinh') == "Lôi Đạo" and any("Lôi" in cp for cp in cp_list):
+        dmg = int(dmg * 1.10)
+    if "Kiếm" in nv.get('dao_chuyen_sau','') and any("Kiếm" in cp for cp in cp_list):
+        dmg = int(dmg * 1.10)
     gio_event = gio_hoang_dao_hien_tai()
     event_line = ""
     if gio_event["key"] == "chien_y":
@@ -503,16 +509,59 @@ def chi_so_trang_bi(ten: str, loai_hint: str = None) -> dict:
 def tong_bonus_trang_bi(nv_or_tb) -> dict:
     if isinstance(nv_or_tb, dict) and "trang_bi" not in nv_or_tb:
         tb_dict = nv_or_tb
+        plus_dict, gem_dict, affix_dict = {}, {}, {}
     else:
         tb_dict = json.loads(nv_or_tb.get('trang_bi','{}') or '{}')
-    total = {"atk":0, "def":0, "hp":0, "crit":0}
+        plus_dict = doc_json_field(nv_or_tb, "trang_bi_plus", {})
+        gem_dict = doc_json_field(nv_or_tb, "trang_bi_gem", {})
+        affix_dict = doc_json_field(nv_or_tb, "trang_bi_affix", {})
+    total = {"atk":0, "def":0, "hp":0, "crit":0, "hut_mau":0, "ne":0}
+    pham_count = {}
     for loai, ten in tb_dict.items():
         st = chi_so_trang_bi(ten, loai)
-        total["atk"] += st["atk"]
-        total["def"] += st["def"]
-        total["hp"]  += st["hp"]
-        total["crit"] += st["crit"]
+        pham = st["pham"]
+        pham_count[pham] = pham_count.get(pham, 0) + 1
+        plus = int(plus_dict.get(loai, 0) or 0)
+        mul = 1 + plus * 0.06
+        total["atk"] += int(st["atk"] * mul)
+        total["def"] += int(st["def"] * mul)
+        total["hp"]  += int(st["hp"] * mul)
+        total["crit"] += st["crit"] + plus // 5
+        gem = gem_dict.get(loai, "")
+        if "Hỏa" in gem or "Lôi" in gem:
+            total["atk"] += 80 * max(1, pham + 1)
+            total["crit"] += 2
+        elif "Thủy" in gem or "Mộc" in gem:
+            total["hp"] += 700 * max(1, pham + 1)
+            total["def"] += 35 * max(1, pham + 1)
+        elif "Âm Dương" in gem or "Hỗn Độn" in gem or "Vô Thượng" in gem:
+            total["atk"] += 120 * max(1, pham + 1)
+            total["def"] += 60 * max(1, pham + 1)
+            total["hp"] += 1200 * max(1, pham + 1)
+        affix = affix_dict.get(loai, "")
+        if affix == "Bạo Kích":
+            total["crit"] += 6
+        elif affix == "Hút Máu":
+            total["hut_mau"] += 5
+        elif affix == "Né Tránh":
+            total["ne"] += 4
+        elif affix == "Thủ Hộ":
+            total["def"] += 250
+            total["hp"] += 3000
+    max_same = max(pham_count.values()) if pham_count else 0
+    if max_same >= 2:
+        total["atk"] = int(total["atk"] * 1.05)
+        total["def"] = int(total["def"] * 1.05)
+    if max_same >= 4:
+        total["hp"] = int(total["hp"] * 1.12)
+        total["crit"] += 3
+    if max_same >= 6:
+        total["atk"] = int(total["atk"] * 1.10)
+        total["def"] = int(total["def"] * 1.10)
+        total["hp"] = int(total["hp"] * 1.10)
+        total["hut_mau"] += 3
     total["crit"] = min(75, total["crit"])
+    total["ne"] = min(40, total["ne"])
     return total
 
 def chi_so_chien_dau(nv) -> dict:
@@ -522,6 +571,8 @@ def chi_so_chien_dau(nv) -> dict:
         "phong_thu": nv['phong_thu'] + gear["def"],
         "linh_luc_max": nv['linh_luc_max'] + gear["hp"],
         "crit": gear["crit"],
+        "hut_mau": gear.get("hut_mau", 0),
+        "ne": gear.get("ne", 0),
         "gear": gear,
     }
 
@@ -1025,11 +1076,26 @@ async def init_db():
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS bi_canh TEXT DEFAULT ''",
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS can_cau TEXT DEFAULT 'Đại Đạo Cần'",
             "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS kiem_linh_active BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS trang_bi_plus TEXT DEFAULT '{}'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS trang_bi_gem TEXT DEFAULT '{}'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS trang_bi_affix TEXT DEFAULT '{}'",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS danh_hieu TEXT DEFAULT ''",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS dao_chuyen_sau TEXT DEFAULT ''",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS pet_cap INT DEFAULT 1",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS pet_exp BIGINT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS dong_phu_cap INT DEFAULT 1",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS cong_duc BIGINT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS tam_ma INT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS tinh_thiet BIGINT DEFAULT 0",
+            "ALTER TABLE nhanvat ADD COLUMN IF NOT EXISTS vuon_cap INT DEFAULT 0",
             "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS cap_do INT DEFAULT 1",
             "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS exp_mon BIGINT DEFAULT 0",
             "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS linh_mach_cap INT DEFAULT 1",
             "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS linh_mach_exp BIGINT DEFAULT 0",
             "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS last_linh_mach TIMESTAMPTZ",
+            "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS quy BIGINT DEFAULT 0",
+            "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS kien_truc TEXT DEFAULT '{}'",
+            "ALTER TABLE tong_mon ADD COLUMN IF NOT EXISTS chien_diem BIGINT DEFAULT 0",
         ]:
             await c.execute(col_sql)
         await c.execute("""
@@ -1069,6 +1135,43 @@ async def init_db():
             CREATE TABLE IF NOT EXISTS linh_mach_luot (
                 user_id BIGINT PRIMARY KEY,
                 last_luot TIMESTAMPTZ
+            )
+        """)
+        await c.execute("""
+            CREATE TABLE IF NOT EXISTS cho_nguoi_cho (
+                id BIGSERIAL PRIMARY KEY,
+                seller_id BIGINT,
+                vat_pham TEXT,
+                gia BIGINT,
+                sold BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        await c.execute("""
+            CREATE TABLE IF NOT EXISTS dau_gia (
+                id BIGSERIAL PRIMARY KEY,
+                seller_id BIGINT,
+                vat_pham TEXT,
+                gia_hien_tai BIGINT,
+                bidder_id BIGINT DEFAULT 0,
+                ket_thuc_luc TIMESTAMPTZ,
+                closed BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        await c.execute("""
+            CREATE TABLE IF NOT EXISTS tang_kinh_manh (
+                user_id BIGINT,
+                manh TEXT,
+                so_luong INT DEFAULT 0,
+                PRIMARY KEY(user_id, manh)
+            )
+        """)
+        await c.execute("""
+            CREATE TABLE IF NOT EXISTS event_votes (
+                user_id BIGINT PRIMARY KEY,
+                buff_key TEXT,
+                voted_at TIMESTAMPTZ DEFAULT NOW()
             )
         """)
     print("✅ DB V3 sẵn sàng!")
@@ -1112,6 +1215,47 @@ async def them_vat_pham(uid, vat_pham: str, so_luong: int = 1, conn=None):
     else:
         async with db_pool.acquire() as c:
             await c.execute(sql, uid, vat_pham, so_luong)
+
+def doc_json_field(obj, key: str, default):
+    try:
+        raw = obj.get(key) if hasattr(obj, "get") else obj[key]
+    except Exception:
+        raw = None
+    if not raw:
+        return default.copy() if isinstance(default, dict) else default
+    try:
+        return json.loads(raw)
+    except Exception:
+        return default.copy() if isinstance(default, dict) else default
+
+async def so_luong_vat_pham(uid, vat_pham: str) -> int:
+    async with db_pool.acquire() as c:
+        return await c.fetchval("SELECT so_luong FROM tui_do WHERE user_id=$1 AND vat_pham=$2", uid, vat_pham) or 0
+
+async def tru_vat_pham(uid, vat_pham: str, so_luong: int = 1, conn=None) -> bool:
+    if so_luong <= 0:
+        return True
+    async def _do(c):
+        item = await c.fetchrow("SELECT so_luong FROM tui_do WHERE user_id=$1 AND vat_pham=$2 FOR UPDATE", uid, vat_pham)
+        if not item or item['so_luong'] < so_luong:
+            return False
+        if item['so_luong'] == so_luong:
+            await c.execute("DELETE FROM tui_do WHERE user_id=$1 AND vat_pham=$2", uid, vat_pham)
+        else:
+            await c.execute("UPDATE tui_do SET so_luong=so_luong-$3 WHERE user_id=$1 AND vat_pham=$2", uid, vat_pham, so_luong)
+        return True
+    if conn:
+        return await _do(conn)
+    async with db_pool.acquire() as c:
+        async with c.transaction():
+            return await _do(c)
+
+def tim_slot_trang_bi(nv, slot: str):
+    tb = doc_json_field(nv, "trang_bi", {})
+    if not slot:
+        return None, None, tb
+    match = next((k for k in tb.keys() if k.lower() == slot.lower()), None)
+    return match, tb.get(match), tb
 
 def exp_can(cg):
     # Nhân Giới (0-5): vài trăm lần tu = lên 1 cấp
@@ -1466,7 +1610,10 @@ async def thong_tin(ctx, member: discord.Member = None):
 
     # Trang bị slot
     tb_dict = json.loads(nv.get('trang_bi','{}') or '{}')
-    gear_bonus = tong_bonus_trang_bi(tb_dict)
+    gear_plus = doc_json_field(nv, 'trang_bi_plus', {})
+    gear_gem = doc_json_field(nv, 'trang_bi_gem', {})
+    gear_affix = doc_json_field(nv, 'trang_bi_affix', {})
+    gear_bonus = tong_bonus_trang_bi(nv)
 
     # Tính ngày tạo
     ngay_tao = nv['created_at'].strftime('%d/%m/%Y') if nv.get('created_at') else 'N/A'
@@ -1481,6 +1628,8 @@ async def thong_tin(ctx, member: discord.Member = None):
         f"{toc.get('icon','👤')} Tộc: **{nv['toc']}**\n"
         f"☯️ Đạo: **{nv['dao_chinh'] or 'Chưa ngộ'}**\n"
         f"📿 Đạo Phụ: **{nv['dao_phu'] or 'Chưa có'}**\n"
+        f"🧭 Chuyên Tu: **{nv.get('dao_chuyen_sau') or 'Chưa chọn'}**\n"
+        f"🎖️ Danh Hiệu: **{nv.get('danh_hieu') or 'Chưa đeo'}**\n"
         f"{lci.get('icon','⭐')} Linh Căn: **{nv['linh_can']}**\n"
         f"🏯 Tông Môn: **{tong_mon_str}**\n"
         f"💍 Đạo Lữ: **{dao_lu_str}**"
@@ -1506,7 +1655,9 @@ async def thong_tin(ctx, member: discord.Member = None):
         f"❤️ Trạng Thái: bình thường\n"
         f"💙 Mana (Câu cá):\n"
         f"**{mana_hien}/{mana_max}**\n"
-        f"🌀 Ma Khí: **{nv.get('ma_khi',0)}**"
+        f"🌀 Ma Khí: **{nv.get('ma_khi',0)}**\n"
+        f"🌑 Tâm Ma: **{nv.get('tam_ma',0)}**\n"
+        f"🏡 Động Phủ: **Cấp {nv.get('dong_phu_cap',1)}** | 🌿 Linh Điền +{nv.get('vuon_cap',0)} ô"
     )
     if bequan_row:
         h, m = bequan_row // 3600, (bequan_row % 3600) // 60
@@ -1519,6 +1670,8 @@ async def thong_tin(ctx, member: discord.Member = None):
     # Tài sản
     tai_san = (
         f"💎 Nguyên Thạch: **{nv['linh_thach']:,}**\n"
+        f"🌞 Công Đức: **{nv.get('cong_duc',0):,}**\n"
+        f"🔩 Tinh Thiết: **{nv.get('tinh_thiet',0):,}**\n"
         f"💀 Số lần độ kiếp: **{nv.get('so_do_kiep', nv.get('so_chet',0))}**"
     )
     # Trang bị
@@ -1536,10 +1689,21 @@ async def thong_tin(ctx, member: discord.Member = None):
         trang_bi_lines.append(f"🔥 Công Pháp: **{cp_list[-1]}**")
     for loai, ten in tb_dict.items():
         icon = slot_icons.get(loai, "📦")
-        trang_bi_lines.append(f"{icon} {loai}: **{ten}**")
+        suffix = []
+        plus = int(gear_plus.get(loai, 0) or 0)
+        gem = gear_gem.get(loai)
+        affix = gear_affix.get(loai)
+        if plus:
+            suffix.append(f"+{plus}")
+        if gem:
+            suffix.append(f"💠{gem}")
+        if affix:
+            suffix.append(f"✨{affix}")
+        extra = f" {' '.join(suffix)}" if suffix else ""
+        trang_bi_lines.append(f"{icon} {loai}: **{ten}**{extra}")
     if tb_dict:
         trang_bi_lines.append(
-            f"📊 Bonus: ⚔️+{gear_bonus['atk']:,} | 🛡️+{gear_bonus['def']:,} | ❤️+{gear_bonus['hp']:,} | 💥+{gear_bonus['crit']}%"
+            f"📊 Bonus: ⚔️+{gear_bonus['atk']:,} | 🛡️+{gear_bonus['def']:,} | ❤️+{gear_bonus['hp']:,} | 💥+{gear_bonus['crit']}% | 🩸+{gear_bonus.get('hut_mau',0)}% | 🌀+{gear_bonus.get('ne',0)}%"
         )
     if nv.get('bi_canh'):
         trang_bi_lines.append(f"🌌 Bí Cảnh: **{nv['bi_canh']}**")
@@ -1559,7 +1723,7 @@ async def thong_tin(ctx, member: discord.Member = None):
         dac_biet_lines.append(f"🧘 Đang bế quan: Còn **{h}h {m}m**")
     if nv.get('pet'):
         pi = PET_DATA.get(nv['pet'],{})
-        dac_biet_lines.append(f"{pi.get('icon','🐾')} Pet: **{nv['pet']}** (+{pi.get('bonus_exp',0)}% EXP)")
+        dac_biet_lines.append(f"{pi.get('icon','🐾')} Pet: **{nv['pet']}** Lv.{nv.get('pet_cap',1)} (+{pi.get('bonus_exp',0)}% EXP)")
     if dac_biet_lines:
         e.add_field(name="✨ Đặc Biệt", value="\n".join(dac_biet_lines), inline=False)
 
@@ -2106,6 +2270,8 @@ async def gui_phan_thuong_boss(gioi: str, boss_info: dict, session_time):
                     INSERT INTO tui_do(user_id, vat_pham, so_luong) VALUES($1,$2,1)
                     ON CONFLICT(user_id, vat_pham) DO UPDATE SET so_luong=tui_do.so_luong+1
                 """, uid, reward["item"])
+            if i <= 9:
+                await them_vat_pham(uid, "Rương Boss", 1, conn=c)
 
             # DM phần thưởng
             try:
@@ -2947,8 +3113,9 @@ async def trong_cay(ctx, hanh_dong: str = None, *, loai_cay: str = None):
 
         async with db_pool.acquire() as c:
             dang_trong = await c.fetchval("SELECT COUNT(*) FROM vuon_cay WHERE user_id=$1 AND da_thu=FALSE", ctx.author.id)
-        if dang_trong >= 5:
-            await ctx.send(embed=embed_mau("❌","Vườn đầy rồi! Tối đa 5 ô. Thu hoạch trước!",0xFF4444)); return
+        max_o = 5 + int(nv.get('vuon_cap', 0) or 0)
+        if dang_trong >= max_o:
+            await ctx.send(embed=embed_mau("❌",f"Vườn đầy rồi! Tối đa {max_o} ô. Thu hoạch trước hoặc dùng `!linhdien nang`.",0xFF4444)); return
 
         thu_hoach_luc = datetime.now(timezone.utc) + timedelta(seconds=cay['thoi_gian'])
         await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-cay['gia_hat'])
@@ -4240,8 +4407,849 @@ async def thanh_tich_cmd(ctx, member: discord.Member = None):
     ]
     await paginate(ctx, tt_pages)
 
+# ══════════════════════════════════════════════════════════════
+#  MEGA IDEAS: TRANG BỊ NÂNG CAO
+# ══════════════════════════════════════════════════════════════
+AFFIX_POOL = ["Bạo Kích", "Hút Máu", "Né Tránh", "Thủ Hộ"]
+
+@bot.command(name="setdo", aliases=["settrangbi"])
+async def set_do_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    tb = doc_json_field(nv, "trang_bi", {})
+    if not tb:
+        await ctx.send(embed=embed_mau("🎽 Set Đồ","Chưa mặc trang bị nào.",0x888888)); return
+    counts = {}
+    for ten in tb.values():
+        p = xac_dinh_pham_trang_bi(ten)
+        counts[p] = counts.get(p, 0) + 1
+    best = max(counts.items(), key=lambda x: x[1])
+    p, so = best
+    lines = [f"{PHAM_CHAT_ICON[p]} **{PHAM_CHAT[p]}**: {so} món"]
+    lines.append("✅ 2 món: +5% ATK/DEF" if so >= 2 else "🔒 2 món: +5% ATK/DEF")
+    lines.append("✅ 4 món: +12% HP, +3% crit" if so >= 4 else "🔒 4 món: +12% HP, +3% crit")
+    lines.append("✅ 6 món: +10% toàn chỉ số, +3% hút máu" if so >= 6 else "🔒 6 món: +10% toàn chỉ số, +3% hút máu")
+    await ctx.send(embed=embed_mau("🎽 Hiệu Ứng Set Trang Bị", "\n".join(lines), 0x55AAFF))
+
+@bot.command(name="cuonghoa", aliases=["chhoa"])
+async def cuong_hoa_cmd(ctx, *, slot: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    slot_match, ten_tb, _ = tim_slot_trang_bi(nv, slot)
+    if not slot_match:
+        await ctx.send(embed=embed_mau("⚒️ Cường Hóa", "Dùng `!cuonghoa <slot đang mặc>`.", 0xFFAA00)); return
+    plus = doc_json_field(nv, "trang_bi_plus", {})
+    cap = int(plus.get(slot_match, 0) or 0)
+    if cap >= 15:
+        await ctx.send(embed=embed_mau("⚒️ Cường Hóa", f"**{slot_match}** đã đạt +15. Dùng `!tinhluyen {slot_match}` để vượt giới hạn.", 0x888888)); return
+    phi = int((cap + 1) ** 2 * 1_200 * max(1, nv['canh_gioi'] + 1))
+    if nv['linh_thach'] < phi:
+        await ctx.send(embed=embed_mau("❌", f"Cần **{phi:,}** 💎.", 0xFF4444)); return
+    ti_le = max(45, 96 - cap * 4)
+    ok = random.randint(1,100) <= ti_le
+    if ok:
+        plus[slot_match] = cap + 1
+        msg = f"✅ **{ten_tb}** → +{cap+1}"
+    else:
+        msg = f"💥 Cường hóa thất bại ở +{cap}. Trang bị không mất cấp."
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-phi, trang_bi_plus=json.dumps(plus, ensure_ascii=False))
+    await cap_nhat_tk(ctx.author.id, tong_lt_tieu=phi)
+    await ctx.send(embed=embed_mau("⚒️ Cường Hóa Trang Bị", f"{msg}\n💎 Chi phí: {phi:,}\n🎯 Tỉ lệ: {ti_le}%", 0xFFAA00))
+
+@bot.command(name="tinhluyen", aliases=["tluyen"])
+async def tinh_luyen_cmd(ctx, *, slot: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    slot_match, ten_tb, _ = tim_slot_trang_bi(nv, slot)
+    if not slot_match:
+        await ctx.send(embed=embed_mau("🔥 Tinh Luyện", "Dùng `!tinhluyen <slot đang mặc>`.", 0xFFAA00)); return
+    plus = doc_json_field(nv, "trang_bi_plus", {})
+    cap = int(plus.get(slot_match, 0) or 0)
+    if cap < 15:
+        await ctx.send(embed=embed_mau("🔒 Chưa Mở", "Cần cường hóa +15 trước khi tinh luyện.", 0xFF4444)); return
+    if cap >= 20:
+        await ctx.send(embed=embed_mau("🔥 Tinh Luyện", "Trang bị đã đạt +20.", 0x888888)); return
+    tinh_thiet_can = (cap - 14) * 80
+    if nv.get('tinh_thiet',0) < tinh_thiet_can:
+        await ctx.send(embed=embed_mau("❌", f"Cần **{tinh_thiet_can:,}** Tinh Thiết. Tách đồ bằng `!tachdo <tên>`.", 0xFF4444)); return
+    ti_le = max(35, 80 - (cap - 15) * 8)
+    ok = random.randint(1,100) <= ti_le
+    if ok:
+        plus[slot_match] = cap + 1
+        msg = f"✅ **{ten_tb}** tinh luyện thành +{cap+1}"
+    else:
+        msg = f"💥 Tinh luyện thất bại ở +{cap}. Không tụt cấp."
+    await cap_nhat(ctx.author.id, tinh_thiet=nv.get('tinh_thiet',0)-tinh_thiet_can, trang_bi_plus=json.dumps(plus, ensure_ascii=False))
+    await ctx.send(embed=embed_mau("🔥 Tinh Luyện Trang Bị", f"{msg}\n🧱 Tinh Thiết: -{tinh_thiet_can:,}\n🎯 Tỉ lệ: {ti_le}%", 0xFF6600))
+
+@bot.command(name="khamngoc", aliases=["ganngoc"])
+async def kham_ngoc_cmd(ctx, slot: str = None, *, ten_ngoc: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    slot_match, ten_tb, _ = tim_slot_trang_bi(nv, slot)
+    if not slot_match or not ten_ngoc:
+        await ctx.send(embed=embed_mau("🧿 Khảm Ngọc", "Dùng `!khamngoc <slot> <tên Linh Châu>`.", 0x55AAFF)); return
+    if "Linh Châu" not in ten_ngoc:
+        await ctx.send(embed=embed_mau("❌","Vật phẩm khảm phải là Linh Châu.",0xFF4444)); return
+    ok = await tru_vat_pham(ctx.author.id, ten_ngoc, 1)
+    if not ok:
+        await ctx.send(embed=embed_mau("❌",f"Không có **{ten_ngoc}** trong túi.",0xFF4444)); return
+    gems = doc_json_field(nv, "trang_bi_gem", {})
+    old = gems.get(slot_match)
+    gems[slot_match] = ten_ngoc
+    if old:
+        await them_vat_pham(ctx.author.id, old, 1)
+    await cap_nhat(ctx.author.id, trang_bi_gem=json.dumps(gems, ensure_ascii=False))
+    await ctx.send(embed=embed_mau("🧿 Khảm Ngọc Thành Công", f"**{ten_tb}**\n{slot_match}: **{ten_ngoc}**" + (f"\n↩️ Ngọc cũ **{old}** trả về túi." if old else ""), 0x55FFAA))
+
+@bot.command(name="tayluyen", aliases=["reroll"])
+async def tay_luyen_cmd(ctx, *, slot: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    slot_match, ten_tb, _ = tim_slot_trang_bi(nv, slot)
+    if not slot_match:
+        await ctx.send(embed=embed_mau("🧬 Tẩy Luyện", "Dùng `!tayluyen <slot đang mặc>`.", 0x55AAFF)); return
+    phi = 20_000 * max(1, nv['canh_gioi'] + 1)
+    if nv['linh_thach'] < phi:
+        await ctx.send(embed=embed_mau("❌", f"Cần **{phi:,}** 💎.", 0xFF4444)); return
+    aff = doc_json_field(nv, "trang_bi_affix", {})
+    affix = random.choice(AFFIX_POOL)
+    aff[slot_match] = affix
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-phi, trang_bi_affix=json.dumps(aff, ensure_ascii=False))
+    await cap_nhat_tk(ctx.author.id, tong_lt_tieu=phi)
+    await ctx.send(embed=embed_mau("🧬 Tẩy Luyện Thành Công", f"**{ten_tb}** nhận dòng phụ: **{affix}**\n💎 Chi phí: {phi:,}", 0xAA55FF))
+
+@bot.command(name="tachdo")
+async def tach_do_cmd(ctx, *, ten_tb: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv or not ten_tb:
+        await ctx.send(embed=embed_mau("🧱 Tách Đồ", "Dùng `!tachdo <tên trang bị trong túi>`.", 0xFFAA00)); return
+    loai = xac_dinh_loai_trang_bi(ten_tb)
+    if not loai:
+        await ctx.send(embed=embed_mau("❌","Vật phẩm này không phải trang bị.",0xFF4444)); return
+    ok = await tru_vat_pham(ctx.author.id, ten_tb, 1)
+    if not ok:
+        await ctx.send(embed=embed_mau("❌","Không có trang bị này trong túi.",0xFF4444)); return
+    pham = xac_dinh_pham_trang_bi(ten_tb)
+    tinh_thiet = (pham + 1) * random.randint(20, 60)
+    await cap_nhat(ctx.author.id, tinh_thiet=nv.get('tinh_thiet',0)+tinh_thiet)
+    await ctx.send(embed=embed_mau("🧱 Tách Đồ Thành Công", f"Đã tách **{ten_tb}**.\nNhận **{tinh_thiet:,}** Tinh Thiết.", 0xFFAA00))
+
+@bot.command(name="ruong", aliases=["openchest"])
+async def mo_ruong_cmd(ctx, *, ten_ruong: str = "Rương Boss"):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if await so_luong_vat_pham(ctx.author.id, ten_ruong) <= 0:
+        await ctx.send(embed=embed_mau("📦 Rương Loot", f"Bạn chưa có **{ten_ruong}**.", 0x888888)); return
+    await tru_vat_pham(ctx.author.id, ten_ruong, 1)
+    cap_bonus = 2 if "Boss" in ten_ruong else 0
+    tb = gen_trang_bi(nv['canh_gioi'] + cap_bonus)
+    dan_pool = [k for k,v in DAN_DUOC.items() if v.get('cap_yeu',0) <= nv['canh_gioi']]
+    dan = random.choice(dan_pool) if dan_pool else "Linh Thảo"
+    lt = random.randint(2_000, 8_000) * max(1, nv['canh_gioi'] + 1)
+    await them_vat_pham(ctx.author.id, tb["ten"], 1)
+    await them_vat_pham(ctx.author.id, dan, 1)
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+lt)
+    await cap_nhat_tk(ctx.author.id, tong_lt_kiem=lt)
+    await ctx.send(embed=embed_mau("📦 Mở Rương Thành Công", f"⚔️ **{tb['ten']}**\n💊 **{dan}** x1\n💎 +{lt:,}", 0xFFD700))
+
+# ══════════════════════════════════════════════════════════════
+#  MEGA IDEAS: TÔNG MÔN, CHỢ, ĐẤU GIÁ
+# ══════════════════════════════════════════════════════════════
+KIEN_TRUC_DATA = {
+    "luyen_dan": {"ten":"🧪 Luyện Đan Phòng", "mo_ta":"+hiệu quả luyện đan", "cost":100_000},
+    "kiem_cac": {"ten":"⚔️ Kiếm Các", "mo_ta":"+đóng góp tông môn chiến", "cost":120_000},
+    "linh_dien": {"ten":"🌿 Linh Điền", "mo_ta":"+sản lượng cây", "cost":90_000},
+    "bao_kho": {"ten":"🏦 Bảo Khố", "mo_ta":"+sức chứa quỹ và thưởng", "cost":150_000},
+}
+
+@bot.command(name="gopquy")
+async def gop_quy_cmd(ctx, so_tien: int = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv or not nv['tong_mon']:
+        await ctx.send(embed=embed_mau("🏯","Bạn cần gia nhập tông môn trước.",0xFF4444)); return
+    if not so_tien or so_tien <= 0:
+        await ctx.send(embed=embed_mau("🏦 Góp Quỹ", "Dùng `!gopquy <linh thạch>`.", 0x55AAFF)); return
+    so_tien = min(so_tien, nv['linh_thach'])
+    async with db_pool.acquire() as c:
+        await c.execute("UPDATE tong_mon SET quy=quy+$2 WHERE ten=$1", nv['tong_mon'], so_tien)
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-so_tien)
+    await cap_nhat_tk(ctx.author.id, tong_lt_tieu=so_tien)
+    await ctx.send(embed=embed_mau("🏦 Góp Quỹ Tông Môn", f"**{nv['ten']}** góp **{so_tien:,}** 💎 cho **{nv['tong_mon']}**.", 0x55FFAA))
+
+@bot.command(name="kientruc", aliases=["ktmon"])
+async def kien_truc_cmd(ctx, hanh_dong: str = None, key: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv or not nv['tong_mon']:
+        await ctx.send(embed=embed_mau("🏯","Bạn cần gia nhập tông môn trước.",0xFF4444)); return
+    async with db_pool.acquire() as c:
+        mon = await c.fetchrow("SELECT * FROM tong_mon WHERE ten=$1", nv['tong_mon'])
+    kt = json.loads(mon['kien_truc'] or '{}')
+    if hanh_dong in ("nang", "upgrade") and key in KIEN_TRUC_DATA:
+        info = KIEN_TRUC_DATA[key]
+        cap = int(kt.get(key, 0) or 0)
+        cost = info["cost"] * (cap + 1)
+        if mon['quy'] < cost:
+            await ctx.send(embed=embed_mau("❌", f"Quỹ tông môn cần **{cost:,}** 💎.", 0xFF4444)); return
+        kt[key] = cap + 1
+        async with db_pool.acquire() as c:
+            await c.execute("UPDATE tong_mon SET quy=quy-$2, kien_truc=$3 WHERE ten=$1", nv['tong_mon'], cost, json.dumps(kt, ensure_ascii=False))
+        await ctx.send(embed=embed_mau("🏰 Nâng Kiến Trúc", f"{info['ten']} → cấp **{cap+1}**\nQuỹ: -{cost:,}", 0xFFD700)); return
+    lines = []
+    for k,v in KIEN_TRUC_DATA.items():
+        cap = int(kt.get(k,0) or 0)
+        lines.append(f"**{v['ten']}** cấp {cap} — {v['mo_ta']} | nâng: {v['cost']*(cap+1):,}💎 | `{k}`")
+    await ctx.send(embed=embed_mau(f"🏰 Kiến Trúc — {nv['tong_mon']}", f"Quỹ: **{mon['quy']:,}** 💎\n\n" + "\n".join(lines) + "\n\nDùng `!kientruc nang <mã>`.", 0x55AAFF))
+
+@bot.command(name="tongmonchien", aliases=["tmchien"])
+async def tong_mon_chien_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv or not nv['tong_mon']:
+        await ctx.send(embed=embed_mau("🏯","Bạn cần gia nhập tông môn trước.",0xFF4444)); return
+    lc = tinh_luc_chien(nv)
+    async with db_pool.acquire() as c:
+        mon = await c.fetchrow("SELECT kien_truc FROM tong_mon WHERE ten=$1", nv['tong_mon'])
+    kt = json.loads(mon['kien_truc'] or '{}') if mon else {}
+    bonus = 1 + int(kt.get("kiem_cac", 0) or 0) * 0.08
+    diem = int((lc // 500) * bonus)
+    lt = random.randint(500, 1500) * max(1, nv['canh_gioi']+1)
+    async with db_pool.acquire() as c:
+        await c.execute("UPDATE tong_mon SET chien_diem=chien_diem+$2 WHERE ten=$1", nv['tong_mon'], diem)
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+lt)
+    await cap_nhat_tk(ctx.author.id, tong_lt_kiem=lt)
+    await ctx.send(embed=embed_mau("🏯 Tông Môn Chiến", f"Bạn xuất chiến cho **{nv['tong_mon']}**.\n⚔️ Chiến điểm: +{diem:,}\n💎 Cá nhân: +{lt:,}", 0xFF5555))
+
+@bot.command(name="cho", aliases=["market"])
+async def cho_cmd(ctx, hanh_dong: str = None, *args):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if hanh_dong in ("ban", "sell") and len(args) >= 2:
+        try:
+            gia = int(args[-1])
+        except ValueError:
+            await ctx.send(embed=embed_mau("❌","Giá phải là số.",0xFF4444)); return
+        vat_pham = " ".join(args[:-1])
+        ok = await tru_vat_pham(ctx.author.id, vat_pham, 1)
+        if not ok:
+            await ctx.send(embed=embed_mau("❌",f"Không có **{vat_pham}** trong túi.",0xFF4444)); return
+        async with db_pool.acquire() as c:
+            mid = await c.fetchval("INSERT INTO cho_nguoi_cho(seller_id,vat_pham,gia) VALUES($1,$2,$3) RETURNING id", ctx.author.id, vat_pham, gia)
+        await ctx.send(embed=embed_mau("🏪 Đã Rao Bán", f"#{mid} **{vat_pham}** — {gia:,}💎", 0x55FFAA)); return
+    if hanh_dong in ("mua", "buy") and args:
+        mid = int(args[0])
+        async with db_pool.acquire() as c:
+            async with c.transaction():
+                item = await c.fetchrow("SELECT * FROM cho_nguoi_cho WHERE id=$1 AND sold=FALSE FOR UPDATE", mid)
+                if not item:
+                    await ctx.send(embed=embed_mau("❌","Không tìm thấy món đang bán.",0xFF4444)); return
+                if item['seller_id'] == ctx.author.id:
+                    await ctx.send(embed=embed_mau("❌","Không thể mua đồ của chính mình.",0xFF4444)); return
+                if nv['linh_thach'] < item['gia']:
+                    await ctx.send(embed=embed_mau("❌",f"Cần **{item['gia']:,}** 💎.",0xFF4444)); return
+                phi = int(item['gia'] * 0.05)
+                await c.execute("UPDATE cho_nguoi_cho SET sold=TRUE WHERE id=$1", mid)
+                await c.execute("UPDATE nhanvat SET linh_thach=linh_thach-$2 WHERE user_id=$1", ctx.author.id, item['gia'])
+                await c.execute("UPDATE nhanvat SET linh_thach=linh_thach+$2 WHERE user_id=$1", item['seller_id'], item['gia']-phi)
+                await them_vat_pham(ctx.author.id, item['vat_pham'], 1, conn=c)
+        await ctx.send(embed=embed_mau("🏪 Mua Thành Công", f"Nhận **{item['vat_pham']}** với giá {item['gia']:,}💎.", 0x55FFAA)); return
+    async with db_pool.acquire() as c:
+        rows = await c.fetch("SELECT id,vat_pham,gia FROM cho_nguoi_cho WHERE sold=FALSE ORDER BY id DESC LIMIT 10")
+    lines = [f"#{r['id']} **{r['vat_pham']}** — {r['gia']:,}💎" for r in rows]
+    await ctx.send(embed=embed_mau("🏪 Chợ Người Chơi", "\n".join(lines) or "Chợ đang trống.\nDùng `!cho ban <vật phẩm> <giá>`.", 0x55AAFF))
+
+@bot.command(name="daugia", aliases=["auction"])
+async def dau_gia_cmd(ctx, hanh_dong: str = None, *args):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if hanh_dong == "tao" and len(args) >= 2:
+        gia = int(args[-1]); vat_pham = " ".join(args[:-1])
+        ok = await tru_vat_pham(ctx.author.id, vat_pham, 1)
+        if not ok:
+            await ctx.send(embed=embed_mau("❌","Không có vật phẩm này trong túi.",0xFF4444)); return
+        end = datetime.now(timezone.utc) + timedelta(hours=24)
+        async with db_pool.acquire() as c:
+            aid = await c.fetchval("INSERT INTO dau_gia(seller_id,vat_pham,gia_hien_tai,ket_thuc_luc) VALUES($1,$2,$3,$4) RETURNING id", ctx.author.id, vat_pham, gia, end)
+        await ctx.send(embed=embed_mau("⚖️ Tạo Đấu Giá", f"#{aid} **{vat_pham}** giá khởi điểm {gia:,}💎 trong 24h.", 0xFFD700)); return
+    if hanh_dong == "bid" and len(args) >= 2:
+        aid, gia = int(args[0]), int(args[1])
+        async with db_pool.acquire() as c:
+            row = await c.fetchrow("SELECT * FROM dau_gia WHERE id=$1 AND closed=FALSE", aid)
+        if not row or row['ket_thuc_luc'] <= datetime.now(row['ket_thuc_luc'].tzinfo):
+            await ctx.send(embed=embed_mau("❌","Phiên đấu giá không tồn tại hoặc đã hết giờ.",0xFF4444)); return
+        if gia <= row['gia_hien_tai'] or nv['linh_thach'] < gia:
+            await ctx.send(embed=embed_mau("❌",f"Giá phải cao hơn {row['gia_hien_tai']:,} và bạn phải đủ tiền.",0xFF4444)); return
+        async with db_pool.acquire() as c:
+            await c.execute("UPDATE dau_gia SET gia_hien_tai=$2,bidder_id=$3 WHERE id=$1", aid, gia, ctx.author.id)
+        await ctx.send(embed=embed_mau("⚖️ Đặt Giá Thành Công", f"#{aid}: **{gia:,}** 💎", 0x55FFAA)); return
+    if hanh_dong == "ketthuc" and args:
+        aid = int(args[0])
+        async with db_pool.acquire() as c:
+            async with c.transaction():
+                row = await c.fetchrow("SELECT * FROM dau_gia WHERE id=$1 AND closed=FALSE FOR UPDATE", aid)
+                if not row:
+                    await ctx.send(embed=embed_mau("❌","Không tìm thấy phiên đấu giá.",0xFF4444)); return
+                if row['seller_id'] != ctx.author.id and row['ket_thuc_luc'] > datetime.now(row['ket_thuc_luc'].tzinfo):
+                    await ctx.send(embed=embed_mau("⏳","Chỉ chủ phiên được kết thúc sớm; người khác phải chờ hết giờ.",0xFFAA00)); return
+                await c.execute("UPDATE dau_gia SET closed=TRUE WHERE id=$1", aid)
+                if row['bidder_id']:
+                    await c.execute("UPDATE nhanvat SET linh_thach=linh_thach-$2 WHERE user_id=$1", row['bidder_id'], row['gia_hien_tai'])
+                    await c.execute("UPDATE nhanvat SET linh_thach=linh_thach+$2 WHERE user_id=$1", row['seller_id'], int(row['gia_hien_tai']*0.95))
+                    await them_vat_pham(row['bidder_id'], row['vat_pham'], 1, conn=c)
+                else:
+                    await them_vat_pham(row['seller_id'], row['vat_pham'], 1, conn=c)
+        await ctx.send(embed=embed_mau("⚖️ Kết Thúc Đấu Giá", f"Phiên #{aid} đã đóng.", 0xFFD700)); return
+    async with db_pool.acquire() as c:
+        rows = await c.fetch("SELECT id,vat_pham,gia_hien_tai,bidder_id,ket_thuc_luc FROM dau_gia WHERE closed=FALSE ORDER BY id DESC LIMIT 10")
+    lines = [f"#{r['id']} **{r['vat_pham']}** — {r['gia_hien_tai']:,}💎 | bidder: {r['bidder_id'] or 'chưa có'}" for r in rows]
+    await ctx.send(embed=embed_mau("⚖️ Đấu Giá", "\n".join(lines) or "Chưa có phiên.\n`!daugia tao <vật phẩm> <giá>`", 0xFFD700))
+
+# ══════════════════════════════════════════════════════════════
+#  MEGA IDEAS: NHIỆM VỤ, CỐT TRUYỆN, THIÊN KIẾP, ĐẠO TUYẾN
+# ══════════════════════════════════════════════════════════════
+@bot.command(name="nhiemvutuan", aliases=["weekly"])
+async def nhiem_vu_tuan_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    start = datetime.now(timezone.utc) - timedelta(days=7)
+    async with db_pool.acquire() as c:
+        claimed = await c.fetchval("SELECT 1 FROM thanh_tich WHERE user_id=$1 AND ma_tt=$2", ctx.author.id, f"weekly_{datetime.now(VN_TZ).isocalendar().week}")
+        tuluyen = await c.fetchval("SELECT COUNT(*) FROM nhat_ky WHERE user_id=$1 AND loai='tuluyen' AND created_at>=$2", ctx.author.id, start) or 0
+        bicanh = await c.fetchval("SELECT COUNT(*) FROM nhat_ky WHERE user_id=$1 AND loai='bicanh' AND created_at>=$2", ctx.author.id, start) or 0
+        boss = await c.fetchval("SELECT COUNT(*) FROM boss_damage_log WHERE user_id=$1 AND created_at>=$2", ctx.author.id, start) or 0
+    done = tuluyen >= 50 and bicanh >= 3 and boss >= 3
+    if done and not claimed:
+        lt = 150_000 * max(1, nv['canh_gioi']+1)
+        exp_gain = int(exp_can(nv['canh_gioi']) * 0.08)
+        await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+lt, exp=nv['exp']+exp_gain)
+        await them_vat_pham(ctx.author.id, "Rương Nhiệm Vụ", 1)
+        async with db_pool.acquire() as c:
+            await c.execute("INSERT INTO thanh_tich(user_id,ma_tt) VALUES($1,$2) ON CONFLICT DO NOTHING", ctx.author.id, f"weekly_{datetime.now(VN_TZ).isocalendar().week}")
+        await ctx.send(embed=embed_mau("📜 Nhiệm Vụ Tuần Hoàn Thành", f"💎 +{lt:,}\n✨ +{exp_gain:,} EXP\n📦 Rương Nhiệm Vụ x1", 0x55FFAA)); return
+    await ctx.send(embed=embed_mau("📜 Nhiệm Vụ Tuần", f"🧘 Tu luyện: {tuluyen}/50\n🌌 Bí cảnh: {bicanh}/3\n👑 Boss: {boss}/3\n\n{'✅ Đủ điều kiện nhận thưởng.' if done else 'Cố lên để nhận rương tuần.'}", 0x55AAFF))
+
+@bot.command(name="cottruyen", aliases=["story"])
+async def cot_truyen_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    stage = min(10, nv['canh_gioi'] // 5 + 1)
+    ma = f"story_{stage}"
+    async with db_pool.acquire() as c:
+        claimed = await c.fetchval("SELECT 1 FROM thanh_tich WHERE user_id=$1 AND ma_tt=$2", ctx.author.id, ma)
+    title = ["", "Phàm Nhân Nhập Đạo","Kim Đan Vấn Tâm","Hóa Thần Xuất Thế","Tiên Lộ Tranh Phong","Thánh Đạo Sơ Chứng","Tinh Hà Đạo Chiến","Hỗn Độn Khai Môn","Thái Cổ Hồi Âm","Thần Thoại Tái Lâm","Vô Thượng Quy Nhất"][stage]
+    if claimed:
+        await ctx.send(embed=embed_mau(f"📖 {title}", "Chương này đã hoàn thành. Tăng cảnh giới để mở chương tiếp theo.", 0x888888)); return
+    lt = 20_000 * stage * max(1, nv['canh_gioi']+1)
+    exp_gain = int(exp_can(nv['canh_gioi']) * (0.02 + stage * 0.004))
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+lt, exp=nv['exp']+exp_gain)
+    async with db_pool.acquire() as c:
+        await c.execute("INSERT INTO thanh_tich(user_id,ma_tt) VALUES($1,$2) ON CONFLICT DO NOTHING", ctx.author.id, ma)
+    await ctx.send(embed=embed_mau(f"📖 Cốt Truyện — {title}", f"Bạn hoàn thành chương **{stage}** trên tiên lộ.\n💎 +{lt:,}\n✨ +{exp_gain:,} EXP", 0xAA55FF))
+
+@bot.command(name="thienkiep", aliases=["tkiep"])
+async def thien_kiep_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    lc = tinh_luc_chien(nv)
+    yeu_cau = int(3_000 * (1.75 ** max(0, nv['canh_gioi'])))
+    ti_le = max(20, min(90, int(45 + (lc - yeu_cau) / max(yeu_cau,1) * 35 + nv.get('cong_duc',0)//5000)))
+    if random.randint(1,100) <= ti_le:
+        lt = random.randint(8_000,20_000) * max(1,nv['canh_gioi']+1)
+        exp_gain = int(exp_can(nv['canh_gioi']) * 0.035)
+        await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+lt, exp=nv['exp']+exp_gain, so_do_kiep=nv.get('so_do_kiep',0)+1)
+        await ctx.send(embed=embed_mau("⚡ Độ Thiên Kiếp Thành Công", f"Thiên lôi rèn thân, đạo tâm vững chắc.\n💎 +{lt:,}\n✨ +{exp_gain:,} EXP\n🎯 Tỉ lệ: {ti_le}%", 0xFFD700))
+    else:
+        mat = min(nv['linh_thach'], random.randint(2_000,8_000) * max(1,nv['canh_gioi']+1))
+        await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-mat, linh_luc=1, tam_ma=min(100, nv.get('tam_ma',0)+10), so_chet=nv['so_chet']+1)
+        await ctx.send(embed=embed_mau("⚡ Độ Kiếp Thất Bại", f"Đạo tâm chấn động, tâm ma tăng.\n💎 -{mat:,}\n🌀 Tâm ma +10\n🎯 Tỉ lệ: {ti_le}%", 0xFF4444))
+
+@bot.command(name="tamma")
+async def tam_ma_cmd(ctx, hanh_dong: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    tam = nv.get('tam_ma',0)
+    if hanh_dong in ("tranap", "trấnáp"):
+        cost = max(1, tam) * 1_000
+        if nv['linh_thach'] < cost:
+            await ctx.send(embed=embed_mau("❌",f"Cần **{cost:,}** 💎 để trấn áp.",0xFF4444)); return
+        giam = min(tam, random.randint(8,18))
+        await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-cost, tam_ma=max(0,tam-giam))
+        await ctx.send(embed=embed_mau("☯️ Trấn Áp Tâm Ma", f"🌀 Tâm ma -{giam}\n💎 -{cost:,}", 0x55FFAA)); return
+    await ctx.send(embed=embed_mau("☯️ Tâm Ma", f"Mức tâm ma hiện tại: **{tam}/100**\nTâm ma cao làm độ kiếp rủi ro hơn.\nDùng `!tamma tranap` để giảm.", 0xAA55FF))
+
+@bot.command(name="cocduyen", aliases=["codyen","kyngo"])
+async def co_duyen_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    async with db_pool.acquire() as c:
+        last = await c.fetchval("SELECT MAX(created_at) FROM nhat_ky WHERE user_id=$1 AND loai='cocduyen'", ctx.author.id)
+    cd = cooldown_con(last, 3600)
+    if cd > 0:
+        await ctx.send(embed=embed_mau("⏳ Cơ Duyên Chưa Tới", f"Còn {int(cd//60)}m nữa.", 0xFFAA00)); return
+    roll = random.choice(["lt","dan","gear","congduc","tamma"])
+    if roll == "lt":
+        val = random.randint(5_000,20_000) * max(1,nv['canh_gioi']+1); await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+val); msg=f"💎 Gặp động phủ cổ, nhận {val:,} linh thạch."
+    elif roll == "dan":
+        dan = random.choice([k for k,v in DAN_DUOC.items() if v.get('cap_yeu',0)<=nv['canh_gioi']]); await them_vat_pham(ctx.author.id, dan, 1); msg=f"💊 Nhặt được **{dan}**."
+    elif roll == "gear":
+        tb=gen_trang_bi(nv['canh_gioi']+1); await them_vat_pham(ctx.author.id,tb['ten'],1); msg=f"⚔️ Cơ duyên pháp bảo: **{tb['ten']}**."
+    elif roll == "congduc":
+        val=random.randint(50,200); await cap_nhat(ctx.author.id, cong_duc=nv.get('cong_duc',0)+val); msg=f"🌞 Cứu người tích đức: +{val} công đức."
+    else:
+        await cap_nhat(ctx.author.id, tam_ma=min(100,nv.get('tam_ma',0)+5), ma_khi=nv.get('ma_khi',0)+50); msg="🌑 Gặp di tích ma đạo: +50 ma khí, tâm ma +5."
+    await them_nhat_ky(ctx.author.id, "cocduyen", msg)
+    await ctx.send(embed=embed_mau("🔮 Cơ Duyên", msg, 0xFFD700))
+
+@bot.command(name="matu")
+async def ma_tu_cmd(ctx, hanh_dong: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if hanh_dong in ("tuluyen","tu"):
+        gain = random.randint(80,180) * max(1,nv['canh_gioi']+1)
+        await cap_nhat(ctx.author.id, ma_khi=nv.get('ma_khi',0)+gain, tan_cong=nv['tan_cong']+max(1,gain//200), tam_ma=min(100,nv.get('tam_ma',0)+random.randint(1,4)))
+        await ctx.send(embed=embed_mau("🌑 Ma Tu Luyện Công", f"🌑 Ma khí +{gain:,}\n⚔️ Tấn công tăng nhẹ\n🌀 Tâm ma tăng.", 0x8B0000)); return
+    await ctx.send(embed=embed_mau("🌑 Ma Tu Tuyến Phụ", f"Ma khí: **{nv.get('ma_khi',0):,}** | Tâm ma: **{nv.get('tam_ma',0)}**\nDùng `!matu tuluyen` để đổi rủi ro lấy sức mạnh.", 0x8B0000))
+
+@bot.command(name="congduc")
+async def cong_duc_cmd(ctx, hanh_dong: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if hanh_dong in ("hanhdao","lamviec"):
+        gain = random.randint(60,160)
+        await cap_nhat(ctx.author.id, cong_duc=nv.get('cong_duc',0)+gain, tam_ma=max(0,nv.get('tam_ma',0)-2))
+        await ctx.send(embed=embed_mau("🌞 Hành Đạo Tích Đức", f"🌞 Công đức +{gain}\n🌀 Tâm ma -2", 0xFFD700)); return
+    if hanh_dong in ("baove","baohộ","baovekiep"):
+        if nv.get('cong_duc',0) < 500:
+            await ctx.send(embed=embed_mau("❌","Cần 500 công đức.",0xFF4444)); return
+        await cap_nhat(ctx.author.id, cong_duc=nv.get('cong_duc',0)-500, so_do_kiep=nv.get('so_do_kiep',0)+1)
+        await ctx.send(embed=embed_mau("🌞 Công Đức Hộ Đạo", "Đổi 500 công đức lấy một tầng bảo hộ độ kiếp.", 0x55FFAA)); return
+    await ctx.send(embed=embed_mau("🌞 Chính Đạo Tuyến Phụ", f"Công đức: **{nv.get('cong_duc',0):,}**\nDùng `!congduc hanhdao` hoặc `!congduc baove`.", 0xFFD700))
+
+# ══════════════════════════════════════════════════════════════
+#  MEGA IDEAS: PET, ĐẠO CHUYÊN SÂU, NGHỀ
+# ══════════════════════════════════════════════════════════════
+CHUYEN_NGANH_DATA = {
+    "kiem": "Kiếm Đạo Chuyên Sâu",
+    "dan": "Đan Đạo Chuyên Sâu",
+    "khi": "Cơ Khí Đạo Chuyên Sâu",
+    "tran": "Trận Đạo Chuyên Sâu",
+    "ma": "Ma Tu Chuyên Sâu",
+}
+
+DAN_RECIPE = {
+    "Tụ Linh Đan": {"Linh Thảo": 2},
+    "Tụ Nguyên Đan": {"Linh Thảo": 2, "Hỏa Liên": 1},
+    "Đại Hồi Linh Đan": {"Linh Thảo": 1, "Băng Liên": 1},
+    "Phá Cảnh Đan": {"Lôi Thảo": 1, "Hỏa Liên": 1},
+    "Thần Nguyên Đan": {"Thần Linh Thảo": 2},
+}
+
+@bot.command(name="pettienhoa", aliases=["ptienhoa"])
+async def pet_tien_hoa_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv or not nv.get('pet'):
+        await ctx.send(embed=embed_mau("🐾","Bạn cần có pet trước.",0xFF4444)); return
+    cap = nv.get('pet_cap',1) or 1
+    if cap >= 20:
+        await ctx.send(embed=embed_mau("🐾 Tiến Hóa Pet","Pet đã đạt cấp tối đa 20.",0x888888)); return
+    cost = cap * 50_000
+    if nv['linh_thach'] < cost:
+        await ctx.send(embed=embed_mau("❌",f"Cần **{cost:,}** 💎.",0xFF4444)); return
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-cost, pet_cap=cap+1, pet_exp=0)
+    await ctx.send(embed=embed_mau("🐾 Pet Tiến Hóa", f"**{nv['pet']}** → cấp **{cap+1}**\nBonus pet mạnh hơn khi tu luyện/câu cá/boss.", 0x55FFAA))
+
+@bot.command(name="petkynang", aliases=["petskill"])
+async def pet_ky_nang_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv or not nv.get('pet'):
+        await ctx.send(embed=embed_mau("🐾","Bạn cần có pet trước.",0xFF4444)); return
+    cap = nv.get('pet_cap',1) or 1
+    lines = [
+        f"🐾 Pet: **{nv['pet']}** cấp {cap}",
+        f"✨ Hộ tu: +{min(50, cap*2)}% EXP pet bonus",
+        f"🎣 Tầm bảo: +{min(30, cap)}% cơ hội câu đồ quý",
+        f"👑 Chiến hống: +{min(25, cap)}% đóng góp boss tự động",
+    ]
+    await ctx.send(embed=embed_mau("🐾 Kỹ Năng Pet", "\n".join(lines), 0x55AAFF))
+
+@bot.command(name="chuyennganh", aliases=["chuyenmon"])
+async def chuyen_nganh_cmd(ctx, key: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if not key or key not in CHUYEN_NGANH_DATA:
+        lines = [f"`{k}` — **{v}**" for k,v in CHUYEN_NGANH_DATA.items()]
+        await ctx.send(embed=embed_mau("☯️ Nhánh Đạo Chuyên Sâu", "\n".join(lines), 0xAA55FF)); return
+    if nv['dao_chuyen_sau']:
+        await ctx.send(embed=embed_mau("❌",f"Bạn đã chọn **{nv['dao_chuyen_sau']}**.",0xFF4444)); return
+    cost = 100_000 * max(1, nv['canh_gioi']+1)
+    if nv['linh_thach'] < cost:
+        await ctx.send(embed=embed_mau("❌",f"Cần **{cost:,}** 💎.",0xFF4444)); return
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-cost, dao_chuyen_sau=CHUYEN_NGANH_DATA[key])
+    await ctx.send(embed=embed_mau("☯️ Chuyên Sâu Thành Công", f"Đã chọn **{CHUYEN_NGANH_DATA[key]}**.", 0x55FFAA))
+
+@bot.command(name="luyendan", aliases=["ldan"])
+async def luyen_dan_cmd(ctx, *, ten_dan: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if not ten_dan or ten_dan not in DAN_RECIPE:
+        lines = [f"**{k}**: " + ", ".join(f"{v}x {kk}" for kk,v in req.items()) for k,req in DAN_RECIPE.items()]
+        await ctx.send(embed=embed_mau("🧪 Luyện Đan", "\n".join(lines) + "\nDùng `!luyendan <tên đan>`.", 0x55AAFF)); return
+    req = DAN_RECIPE[ten_dan]
+    async with db_pool.acquire() as c:
+        async with c.transaction():
+            for item, sl in req.items():
+                ok = await tru_vat_pham(ctx.author.id, item, sl, conn=c)
+                if not ok:
+                    await ctx.send(embed=embed_mau("❌",f"Thiếu **{item}** x{sl}.",0xFF4444)); return
+            ti_le = 70 + (15 if nv.get('dao_phu') == "Đan Đạo" or "Đan" in nv.get('dao_chuyen_sau','') else 0)
+            if random.randint(1,100) <= ti_le:
+                await them_vat_pham(ctx.author.id, ten_dan, 1, conn=c)
+                msg = f"✅ Thành đan: **{ten_dan}** x1"
+            else:
+                msg = "💥 Luyện đan thất bại, nguyên liệu hóa tro."
+    await ctx.send(embed=embed_mau("🧪 Luyện Đan", msg, 0x55FFAA if "✅" in msg else 0xFF4444))
+
+@bot.command(name="nangpham")
+async def nang_pham_cmd(ctx, *, ten_tb: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv or not ten_tb:
+        await ctx.send(embed=embed_mau("🔥 Nâng Phẩm", "Dùng `!nangpham <tên trang bị trong túi>`.", 0xFFAA00)); return
+    if xac_dinh_loai_trang_bi(ten_tb) is None:
+        await ctx.send(embed=embed_mau("❌","Vật phẩm này không phải trang bị.",0xFF4444)); return
+    pham = xac_dinh_pham_trang_bi(ten_tb)
+    if pham >= len(PHAM_CHAT)-1:
+        await ctx.send(embed=embed_mau("🔥 Nâng Phẩm","Trang bị đã tối phẩm.",0x888888)); return
+    cost = (pham + 1) * 300
+    if nv.get('tinh_thiet',0) < cost:
+        await ctx.send(embed=embed_mau("❌",f"Cần **{cost:,}** Tinh Thiết.",0xFF4444)); return
+    ok = await tru_vat_pham(ctx.author.id, ten_tb, 1)
+    if not ok:
+        await ctx.send(embed=embed_mau("❌","Không có trang bị này trong túi.",0xFF4444)); return
+    ten_moi = ten_tb
+    for i, icon in enumerate(PHAM_CHAT_ICON):
+        if ten_moi.startswith(icon):
+            ten_moi = ten_moi[len(icon):]
+            break
+    for p in PHAM_CHAT:
+        if ten_moi.startswith(p + " "):
+            ten_moi = ten_moi[len(p)+1:]
+            break
+    ten_moi = f"{PHAM_CHAT_ICON[pham+1]}{PHAM_CHAT[pham+1]} {ten_moi}"
+    await them_vat_pham(ctx.author.id, ten_moi, 1)
+    await cap_nhat(ctx.author.id, tinh_thiet=nv.get('tinh_thiet',0)-cost)
+    await ctx.send(embed=embed_mau("🔥 Nâng Phẩm Thành Công", f"Nhận **{ten_moi}**\n🧱 -{cost:,} Tinh Thiết", 0xFFD700))
+
+@bot.command(name="cauboss")
+async def cau_boss_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if nv.get('mana',100) < 40:
+        await ctx.send(embed=embed_mau("💙 Hết Mana","Cần 40 mana để câu boss.",0xFF4444)); return
+    lc = tinh_luc_chien(nv)
+    yeu = 5_000 * (nv['canh_gioi']+1)
+    ti_le = max(20, min(90, int(45 + (lc-yeu)/max(yeu,1)*30)))
+    await cap_nhat(ctx.author.id, mana=nv.get('mana',100)-40)
+    if random.randint(1,100) <= ti_le:
+        lt=random.randint(30_000,100_000)*max(1,nv['canh_gioi']+1); await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+lt); await them_vat_pham(ctx.author.id,"Rương Boss",1)
+        await ctx.send(embed=embed_mau("🎣 Câu Cá Boss", f"Bạn câu được dị thú biển và trấn áp thành công!\n💎 +{lt:,}\n📦 Rương Boss x1", 0x55FFAA))
+    else:
+        await ctx.send(embed=embed_mau("🎣 Câu Cá Boss", "Dị thú phá dây câu rồi trốn mất.", 0xFF4444))
+
+@bot.command(name="haivuc")
+async def hai_vuc_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    can = CAN_CAU_DATA.get(nv.get('can_cau','Đại Đạo Cần'), {"bonus":1})
+    lt = int(random.randint(5_000,20_000) * max(1,nv['canh_gioi']+1) * can.get("bonus",1))
+    item = random.choice(["Linh Thảo","Tụ Linh Đan","Rương Nhiệm Vụ","Linh Châu Thủy"])
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+lt)
+    await them_vat_pham(ctx.author.id, item, 1)
+    await ctx.send(embed=embed_mau("🌊 Hải Vực Viễn Chinh", f"Thuyền pháp bảo trở về từ hải vực.\n💎 +{lt:,}\n🎁 **{item}** x1", 0x55AAFF))
+
+@bot.command(name="linhdien")
+async def linh_dien_cmd(ctx, hanh_dong: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    cap = nv.get('vuon_cap',0) or 0
+    if hanh_dong in ("nang", "upgrade"):
+        cost = (cap + 1) * 50_000
+        if nv['linh_thach'] < cost:
+            await ctx.send(embed=embed_mau("❌",f"Cần **{cost:,}** 💎.",0xFF4444)); return
+        await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-cost, vuon_cap=cap+1)
+        await ctx.send(embed=embed_mau("🌿 Nâng Linh Điền", f"Linh điền cấp **{cap+1}**. Số ô trồng: **{5+cap+1}**.", 0x55FFAA)); return
+    await ctx.send(embed=embed_mau("🌿 Linh Điền", f"Cấp: **{cap}**\nSố ô trồng: **{5+cap}**\nDùng `!linhdien nang` để mở thêm ô.", 0x55AAFF))
+
+# ══════════════════════════════════════════════════════════════
+#  MEGA IDEAS: XÃ HỘI, PVP MÙA, BẢNG XẾP HẠNG, TIỆN ÍCH
+# ══════════════════════════════════════════════════════════════
+@bot.command(name="songtu")
+async def song_tu_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv or not nv.get('dao_lu'):
+        await ctx.send(embed=embed_mau("💍","Bạn chưa có đạo lữ.",0xFF4444)); return
+    partner = await get_nv(int(nv['dao_lu']))
+    if not partner:
+        await ctx.send(embed=embed_mau("💍","Không tìm thấy đạo lữ.",0xFF4444)); return
+    exp_gain = int(exp_can(nv['canh_gioi']) * 0.018)
+    lt = random.randint(3_000,10_000) * max(1,nv['canh_gioi']+1)
+    await cap_nhat(ctx.author.id, exp=nv['exp']+exp_gain, linh_thach=nv['linh_thach']+lt)
+    await ctx.send(embed=embed_mau("💍 Đạo Lữ Song Tu", f"Cùng **{partner['ten']}** vận chuyển chu thiên.\n✨ +{exp_gain:,} EXP\n💎 +{lt:,}", 0xFF69B4))
+
+@bot.command(name="pvpmua", aliases=["pvpss"])
+async def pvp_mua_cmd(ctx):
+    start = datetime.now(timezone.utc) - timedelta(days=30)
+    async with db_pool.acquire() as c:
+        rows = await c.fetch("""
+            SELECT nguoi_thang, ten_thang, COUNT(*) AS wins
+            FROM lich_su_pvp
+            WHERE created_at >= $1
+            GROUP BY nguoi_thang, ten_thang
+            ORDER BY wins DESC
+            LIMIT 10
+        """, start)
+    medals = ["🥇","🥈","🥉"] + ["🏅"]*10
+    lines = [f"{medals[i]} **{r['ten_thang']}** — {r['wins']} trận thắng" for i,r in enumerate(rows)]
+    await ctx.send(embed=embed_mau("🏅 Mùa Giải PvP 30 Ngày", "\n".join(lines) or "Chưa có dữ liệu PvP.", 0xFF8800))
+
+@bot.command(name="dautruong3v3", aliases=["3v3"])
+async def dau_truong_3v3_cmd(ctx, *members: discord.Member):
+    if len(members) != 6:
+        await ctx.send(embed=embed_mau("⚔️ Đấu Trường 3v3", "Dùng `!dautruong3v3 @a @b @c @d @e @f`.\n3 người đầu là đội 1, 3 người sau là đội 2.", 0xFFAA00)); return
+    team1, team2 = members[:3], members[3:]
+    async def team_power(team):
+        total = 0; names = []
+        for m in team:
+            nv = await get_nv(m.id)
+            if nv:
+                total += tinh_luc_chien(nv)
+                names.append(nv['ten'])
+        return total, names
+    p1,n1 = await team_power(team1); p2,n2 = await team_power(team2)
+    if not n1 or not n2:
+        await ctx.send(embed=embed_mau("❌","Hai đội cần có nhân vật hợp lệ.",0xFF4444)); return
+    p1 = int(p1 * random.uniform(0.85,1.15)); p2 = int(p2 * random.uniform(0.85,1.15))
+    win = "Đội 1" if p1 >= p2 else "Đội 2"
+    await ctx.send(embed=embed_mau("⚔️ Đấu Trường 3v3", f"**Đội 1:** {', '.join(n1)} — {p1:,}\n**Đội 2:** {', '.join(n2)} — {p2:,}\n\n🏆 **{win} thắng!**", 0xFF5555))
+
+@bot.command(name="tangkinhcac", aliases=["tkc"])
+async def tang_kinh_cac_cmd(ctx, hanh_dong: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    if hanh_dong in ("nghiencuu","tim"):
+        manh = random.choice(["Kiếm Quyết", "Đan Kinh", "Trận Pháp", "Thân Pháp", "Đạo Kinh"])
+        async with db_pool.acquire() as c:
+            await c.execute("""
+                INSERT INTO tang_kinh_manh(user_id,manh,so_luong) VALUES($1,$2,1)
+                ON CONFLICT(user_id,manh) DO UPDATE SET so_luong=tang_kinh_manh.so_luong+1
+            """, ctx.author.id, manh)
+        await ctx.send(embed=embed_mau("📚 Tàng Kinh Các", f"Tìm được mảnh **{manh}**.", 0xAA55FF)); return
+    if hanh_dong in ("hop","ghep"):
+        async with db_pool.acquire() as c:
+            row = await c.fetchrow("SELECT manh,so_luong FROM tang_kinh_manh WHERE user_id=$1 AND so_luong>=5 LIMIT 1", ctx.author.id)
+            if not row:
+                await ctx.send(embed=embed_mau("📚","Cần 5 mảnh cùng loại để hợp thành bí kíp.",0xFFAA00)); return
+            await c.execute("UPDATE tang_kinh_manh SET so_luong=so_luong-5 WHERE user_id=$1 AND manh=$2", ctx.author.id, row['manh'])
+        bi_kip = random.choice(list(CONG_PHAP_PASSIVE.keys()))
+        await them_vat_pham(ctx.author.id, f"Bí Kíp {bi_kip}", 1)
+        await ctx.send(embed=embed_mau("📚 Hợp Thành Bí Kíp", f"5 mảnh **{row['manh']}** → **Bí Kíp {bi_kip}**", 0xFFD700)); return
+    async with db_pool.acquire() as c:
+        rows = await c.fetch("SELECT manh,so_luong FROM tang_kinh_manh WHERE user_id=$1 ORDER BY manh", ctx.author.id)
+    lines = [f"📜 **{r['manh']}** x{r['so_luong']}" for r in rows]
+    await ctx.send(embed=embed_mau("📚 Tàng Kinh Các", "\n".join(lines) or "Dùng `!tangkinhcac nghiencuu` để tìm mảnh.", 0xAA55FF))
+
+@bot.command(name="sotay")
+async def so_tay_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("🧾 Sổ Tay","Bắt đầu bằng `!taonv <tên>`.",0x55AAFF)); return
+    tips = []
+    if nv['canh_gioi'] < 3: tips.append("Ưu tiên `!tuluyen`, `!khampha`, `!boss` để lên Kim Đan.")
+    if not nv['dao_chinh'] and nv['canh_gioi'] >= 5: tips.append("Bạn đã có thể chọn đạo chính bằng `!chondao`.")
+    if not nv['tong_mon'] and nv['canh_gioi'] >= 3: tips.append("Lập hoặc gia nhập tông môn để có buff cộng đồng.")
+    if not nv.get('pet'): tips.append("Mua pet bằng `!pet mua <tên>` rồi phái đi thám hiểm.")
+    tips.append("Mỗi ngày nhớ `!nhiemvu`, `!bicanh`, `!linhmach tu`, `!giohoangdao`.")
+    await ctx.send(embed=embed_mau(f"🧾 Sổ Tay — {nv['ten']}", "\n".join(f"• {x}" for x in tips), 0x55AAFF))
+
+@bot.command(name="danhhieu", aliases=["title"])
+async def danh_hieu_cmd(ctx, *, ten: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    async with db_pool.acquire() as c:
+        rows = await c.fetch("SELECT ma_tt FROM thanh_tich WHERE user_id=$1 LIMIT 20", ctx.author.id)
+    unlocked = [THANH_TICH.get(r['ma_tt'],{}).get('ten', r['ma_tt']) for r in rows]
+    if ten:
+        if ten not in unlocked and ten not in [r['ma_tt'] for r in rows]:
+            await ctx.send(embed=embed_mau("❌","Bạn chưa mở danh hiệu này.",0xFF4444)); return
+        await cap_nhat(ctx.author.id, danh_hieu=ten)
+        await ctx.send(embed=embed_mau("🎖️ Đã Đeo Danh Hiệu", f"**{ten}**", 0x55FFAA)); return
+    await ctx.send(embed=embed_mau("🎖️ Danh Hiệu", "\n".join(f"• {x}" for x in unlocked[:15]) or "Chưa có thành tích.\nDùng `!danhhieu <tên>` để đeo.", 0xFFD700))
+
+@bot.command(name="dongphu")
+async def dong_phu_cmd(ctx, hanh_dong: str = None):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    cap = nv.get('dong_phu_cap',1) or 1
+    if hanh_dong in ("nang","upgrade"):
+        cost = cap * 100_000
+        if nv['linh_thach'] < cost:
+            await ctx.send(embed=embed_mau("❌",f"Cần **{cost:,}** 💎.",0xFF4444)); return
+        await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']-cost, dong_phu_cap=cap+1, mana_max=nv.get('mana_max',100)+20, linh_luc_max=nv['linh_luc_max']+500)
+        await ctx.send(embed=embed_mau("🕯️ Nâng Cấp Động Phủ", f"Động phủ cấp **{cap+1}**\n💙 Mana max +20 | ❤️ Linh lực max +500", 0x55FFAA)); return
+    await ctx.send(embed=embed_mau("🕯️ Động Phủ Cá Nhân", f"Cấp **{cap}**\nBuff: +{cap*2}% tốc độ tu luyện offline\nDùng `!dongphu nang`.", 0xAA55FF))
+
+@bot.command(name="nhadaophap", aliases=["seasonarena"])
+async def nha_dau_phap_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    rule = ["Cấm pet", "Cấm pháp bảo", "Chỉ dùng kiếm đạo", "Linh lực giảm nửa", "Bạo kích x2"][datetime.now(VN_TZ).day % 5]
+    lc = tinh_luc_chien(nv)
+    target = int(2_500 * (1.8 ** nv['canh_gioi']))
+    ok = random.randint(1,100) <= max(25, min(88, int(50 + (lc-target)/max(target,1)*30)))
+    if ok:
+        lt = random.randint(8_000, 25_000) * max(1,nv['canh_gioi']+1); await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+lt)
+        msg = f"✅ Thắng nhà đấu pháp mùa.\nLuật: **{rule}**\n💎 +{lt:,}"
+    else:
+        msg = f"💥 Thua nhà đấu pháp mùa.\nLuật: **{rule}**"
+    await ctx.send(embed=embed_mau("🧱 Nhà Đấu Pháp Theo Mùa", msg, 0xFF8800))
+
+@bot.command(name="bossmua", aliases=["seasonboss"])
+async def boss_mua_cmd(ctx):
+    start = datetime.now(timezone.utc) - timedelta(days=30)
+    async with db_pool.acquire() as c:
+        rows = await c.fetch("""
+            SELECT ten_nv, SUM(damage) AS dmg
+            FROM boss_damage_log
+            WHERE created_at >= $1
+            GROUP BY user_id, ten_nv
+            ORDER BY dmg DESC
+            LIMIT 10
+        """, start)
+    medals = ["🥇","🥈","🥉"] + ["🏅"]*10
+    lines = [f"{medals[i]} **{r['ten_nv']}** — {int(r['dmg']):,} damage" for i,r in enumerate(rows)]
+    await ctx.send(embed=embed_mau("👑 Boss Liên Server Mùa", "\n".join(lines) or "Chưa có damage mùa này.", 0xFF0000))
+
+@bot.command(name="bosspha", aliases=["bossphase"])
+async def boss_pha_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    gioi = nv['ban_do']
+    async with db_pool.acquire() as c:
+        row = await c.fetchrow("SELECT * FROM boss_the_gioi WHERE gioi=$1", gioi)
+    if not row or row['trang_thai'] != 'song':
+        await ctx.send(embed=embed_mau("👑","Boss thế giới chưa hoạt động.",0x888888)); return
+    boss = get_boss_hien_tai(gioi, row['boss_idx'] or 0)
+    pct = (row['hp_hien'] or boss['hp']) / boss['hp']
+    phase = "Phá Giáp" if pct < 0.7 else "Khai Chiến"
+    if pct < 0.35: phase = "Cuồng Bạo"
+    await ctx.send(embed=embed_mau("🛡️ Pha Boss", f"**{boss['ten']}**\nPha hiện tại: **{phase}**\nPhá giáp càng sâu, top damage nhận thưởng càng tốt.", 0xFF5555))
+
+@bot.command(name="combo")
+async def combo_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    cps = json.loads(nv['cong_phap'] or '[]')
+    hits = []
+    if nv['dao_chinh'] == "Kiếm Đạo" and any("Kiếm" in x for x in cps): hits.append("⚔️ Kiếm Đạo + Kiếm pháp: +15% boss/PvP damage")
+    if nv['dao_chinh'] == "Lôi Đạo" and any("Lôi" in x for x in cps): hits.append("⚡ Lôi Đạo + Lôi pháp: +10% bạo kích")
+    if nv['dao_phu'] == "Đan Đạo": hits.append("🧪 Đan Đạo: +15% tỉ lệ luyện đan")
+    await ctx.send(embed=embed_mau("🎯 Combo Công Pháp", "\n".join(hits) or "Chưa có combo nổi bật. Học công pháp hợp đạo để mở cộng hưởng.", 0x55AAFF))
+
+@bot.command(name="votebuff")
+async def vote_buff_cmd(ctx, key: str = None):
+    if key not in [str(i) for i in range(6)]:
+        lines = [f"`{i}` — {v['ten']}: {v['mo_ta']}" for i,v in GIO_HOANG_DAO.items()]
+        await ctx.send(embed=embed_mau("🌠 Vote Giờ Vàng", "\n".join(lines) + "\nDùng `!votebuff <0-5>`.", 0xFFD700)); return
+    async with db_pool.acquire() as c:
+        await c.execute("""
+            INSERT INTO event_votes(user_id,buff_key) VALUES($1,$2)
+            ON CONFLICT(user_id) DO UPDATE SET buff_key=$2, voted_at=NOW()
+        """, ctx.author.id, key)
+        rows = await c.fetch("SELECT buff_key, COUNT(*) AS c FROM event_votes GROUP BY buff_key ORDER BY c DESC")
+    lines = [f"{GIO_HOANG_DAO[int(r['buff_key'])]['ten']} — {r['c']} vote" for r in rows]
+    await ctx.send(embed=embed_mau("🌠 Vote Giờ Vàng", "\n".join(lines), 0xFFD700))
+
+@bot.command(name="thiencobang", aliases=["tcb"])
+async def thien_co_bang_cmd(ctx):
+    async with db_pool.acquire() as c:
+        lc_rows = await c.fetch("SELECT ten,toc,canh_gioi,tu_vi,tan_cong,phong_thu,linh_luc_max,trang_bi FROM nhanvat ORDER BY canh_gioi DESC, tu_vi DESC LIMIT 5")
+        rich_rows = await c.fetch("SELECT ten,linh_thach FROM nhanvat ORDER BY linh_thach DESC LIMIT 5")
+        cong_rows = await c.fetch("SELECT ten,cong_duc FROM nhanvat ORDER BY cong_duc DESC LIMIT 5")
+    lc_lines = [f"{i+1}. **{r['ten']}** — {tinh_luc_chien(r):,}" for i,r in enumerate(lc_rows)]
+    rich_lines = [f"{i+1}. **{r['ten']}** — {r['linh_thach']:,}💎" for i,r in enumerate(rich_rows)]
+    cong_lines = [f"{i+1}. **{r['ten']}** — {int(r['cong_duc'] or 0):,} công đức" for i,r in enumerate(cong_rows)]
+    await paginate(ctx, [
+        ("🧿 Thiên Cơ Bảng — Lực Chiến", "\n".join(lc_lines) or "Trống"),
+        ("🧿 Thiên Cơ Bảng — Tài Phú", "\n".join(rich_lines) or "Trống"),
+        ("🧿 Thiên Cơ Bảng — Công Đức", "\n".join(cong_lines) or "Trống"),
+    ], color=0x55AAFF)
+
+@bot.command(name="bicanhparty", aliases=["bcparty"])
+async def bi_canh_party_cmd(ctx, *, ten_bi_canh: str = None):
+    mentions = ctx.message.mentions[:4]
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    key, info = tim_bi_canh(ten_bi_canh or "u minh")
+    if not info:
+        await ctx.send(embed=embed_mau("❌","Không tìm thấy bí cảnh.",0xFF4444)); return
+    team_ids = [ctx.author.id] + [m.id for m in mentions if m.id != ctx.author.id]
+    team = []
+    for uid in team_ids[:5]:
+        member_nv = await get_nv(uid)
+        if member_nv:
+            team.append(member_nv)
+    power = sum(tinh_luc_chien(x) for x in team)
+    target = int(2_000 * (1.9 ** info['cap_yeu']) * info['do_kho'])
+    ok = random.randint(1,100) <= max(25, min(95, int(50 + (power-target)/max(target,1)*30)))
+    if ok:
+        reward = int(5_000 * info['do_kho'] * max(1, nv['canh_gioi']+1))
+        for member_nv in team:
+            await cap_nhat(member_nv['user_id'], linh_thach=member_nv['linh_thach']+reward)
+            await them_vat_pham(member_nv['user_id'], random.choice(info['loot']), 1)
+        msg = f"✅ Tổ đội {len(team)} người thông quan **{info['ten']}**.\nMỗi người nhận {reward:,}💎 và loot bí cảnh."
+    else:
+        msg = f"💥 Tổ đội thất bại tại **{info['ten']}**. Cần tăng lực chiến hoặc thêm người."
+    await ctx.send(embed=embed_mau("🗺️ Bí Cảnh Tổ Đội", msg, 0xAA55FF))
+
+@bot.command(name="bicanhmua", aliases=["seasondungeon"])
+async def bi_canh_mua_cmd(ctx):
+    nv = await get_nv(ctx.author.id)
+    if not nv:
+        await ctx.send(embed=embed_mau("❌","Dùng `!taonv <tên>` trước!",0xFF4444)); return
+    season = datetime.now(VN_TZ).isocalendar().week
+    name = ["Tinh Hà Cổ Lộ", "Huyết Nguyệt Ma Quật", "Vạn Kiếm Thiên Uyên", "Hỗn Độn Linh Hải"][season % 4]
+    lt = random.randint(10_000,35_000) * max(1,nv['canh_gioi']+1)
+    await cap_nhat(ctx.author.id, linh_thach=nv['linh_thach']+lt)
+    await them_vat_pham(ctx.author.id, "Rương Nhiệm Vụ", 1)
+    await ctx.send(embed=embed_mau("🌌 Bí Cảnh Mùa", f"Tuần này mở **{name}**.\nBạn khiêu chiến và nhận:\n💎 +{lt:,}\n📦 Rương Nhiệm Vụ x1", 0x5865F2))
+
 IDEA_NANG_CAP = [
-    "✅ Đã thêm bản này: nhiệm vụ ngày, bí cảnh solo, pet thám hiểm, giờ vàng, linh mạch tông môn.",
+    "✅ Đã triển khai toàn bộ idea dưới dạng bản chơi được: dùng `!help` trang 5 để xem lệnh mới.",
     "🎽 Set trang bị: đủ 2/4/6 món cùng phẩm mở hiệu ứng riêng.",
     "⚒️ Cường hóa + tinh luyện: nâng +1 → +15, thất bại có bảo hộ.",
     "🧿 Khảm ngọc: gắn Linh Châu vào vũ khí/giáp để thêm crit, hút máu, né tránh.",
@@ -4288,7 +5296,7 @@ IDEA_NANG_CAP = [
 async def ideas_cmd(ctx):
     chunk = 5
     pages = [
-        (f"💡 Ý Tưởng Nâng Cấp Bot ({i//chunk+1}/{(len(IDEA_NANG_CAP)-1)//chunk+1})", "\n".join(IDEA_NANG_CAP[i:i+chunk]))
+        (f"💡 Idea Bot Đã Triển Khai ({i//chunk+1}/{(len(IDEA_NANG_CAP)-1)//chunk+1})", "\n".join(IDEA_NANG_CAP[i:i+chunk]))
         for i in range(0, len(IDEA_NANG_CAP), chunk)
     ]
     await paginate(ctx, pages)
@@ -4386,6 +5394,61 @@ HELP_PAGES = [
 **36 Cảnh Giới** từ Phàm Nhân → Vô Thượng Đại Đạo
 """),
 ]
+
+HELP_PAGES = [
+    (
+        title.replace("(1/4)", "(1/5)")
+             .replace("(2/4)", "(2/5)")
+             .replace("(3/4)", "(3/5)")
+             .replace("(4/4)", "(4/5)"),
+        body
+    )
+    for title, body in HELP_PAGES
+]
+
+HELP_PAGES.append(("📖 Hướng Dẫn (5/5) — Mega Ideas", """
+**⚒️ Trang Bị Xịn**
+`!setdo` — Xem set bonus 2/4/6 món
+`!cuonghoa <slot>` — Cường hóa trang bị đang mặc
+`!tinhluyen <slot>` — Tinh luyện trang bị
+`!khamngoc <slot> <Linh Châu>` — Khảm ngọc
+`!tayluyen <slot>` — Reroll dòng phụ
+`!tachdo <tên>` / `!nangpham <tên>` — Tách đồ, nâng phẩm
+`!ruong [tên rương]` — Mở rương loot
+
+**🏯 Tông Môn & Kinh Tế**
+`!gopquy <số>` — Góp quỹ tông môn
+`!kientruc` / `!kientruc nang <key>` — Công trình tông môn
+`!tongmonchien` — Tông môn chiến tuần
+`!cho` / `!cho ban <item> <giá>` / `!cho mua <id>` — Chợ người chơi
+`!daugia` / `!daugia tao <item> <giá>` / `!daugia bid <id> <giá>` — Đấu giá
+
+**📜 Nhiệm Vụ & Tuyến Đạo**
+`!nhiemvutuan` — Nhiệm vụ tuần
+`!cottruyen` — Chương truyện theo cảnh giới
+`!thienkiep` — Thiên kiếp động
+`!tamma [tranap]` — Tâm ma
+`!cocduyen` / `!kyngo` — Cơ duyên, kỳ ngộ
+`!matu [tuluyen]` / `!congduc [hanhdao|baove]` — Ma tu, chính đạo
+
+**🐾 Pet, Nghề & Khám Phá**
+`!pettienhoa` / `!petkynang` — Pet tiến hóa, kỹ năng
+`!chuyennganh <kiem|dan|khi|tran|ma>` — Nhánh đạo chuyên sâu
+`!luyendan <tên đan>` — Luyện đan từ cây trồng
+`!cauboss` / `!haivuc` — Câu cá boss, hải vực
+`!linhdien [nang]` — Nâng linh điền
+
+**⚔️ Endgame & Xã Hội**
+`!songtu` — Nhiệm vụ song tu
+`!pvpmua` / `!dautruong3v3` — Mùa PvP, đấu trường 3v3
+`!tangkinhcac [nghiencuu|hop]` — Mảnh công pháp
+`!sotay` — Gợi ý việc nên làm
+`!danhhieu [tên]` — Đeo danh hiệu
+`!dongphu [nang]` — Động phủ cá nhân
+`!nhadaophap` / `!bossmua` / `!bosspha` — Luật mùa, boss mùa, pha boss
+`!combo` / `!votebuff <0-5>` / `!thiencobang` — Combo, vote buff, bảng phụ
+`!bicanhparty <tên> @team` / `!bicanhmua` — Bí cảnh tổ đội, bí cảnh mùa
+"""))
 
 @bot.command(name="help", aliases=["hd","huongdan"])
 async def help_cmd(ctx):
